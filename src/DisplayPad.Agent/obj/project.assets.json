@@ -108,11 +108,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Projekte\\DisplayPad Software\\src\\DisplayPad.Agent\\DisplayPad.Agent.csproj",
+      "projectUniqueName": "D:\\Projekte\\DisplayPad-Software\\src\\DisplayPad.Agent\\DisplayPad.Agent.csproj",
       "projectName": "DisplayPad.Agent",
-      "projectPath": "D:\\Projekte\\DisplayPad Software\\src\\DisplayPad.Agent\\DisplayPad.Agent.csproj",
+      "projectPath": "D:\\Projekte\\DisplayPad-Software\\src\\DisplayPad.Agent\\DisplayPad.Agent.csproj",
       "packagesPath": "C:\\Users\\nikol\\.nuget\\packages\\",
-      "outputPath": "D:\\Projekte\\DisplayPad Software\\src\\DisplayPad.Agent\\obj\\",
+      "outputPath": "D:\\Projekte\\DisplayPad-Software\\src\\DisplayPad.Agent\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\nikol\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -128,8 +128,8 @@
           "framework": "net8.0-windows7.0",
           "targetAlias": "net8.0-windows",
           "projectReferences": {
-            "D:\\Projekte\\DisplayPad Software\\src\\DisplayPad.Shared\\DisplayPad.Shared.csproj": {
-              "projectPath": "D:\\Projekte\\DisplayPad Software\\src\\DisplayPad.Shared\\DisplayPad.Shared.csproj"
+            "D:\\Projekte\\DisplayPad-Software\\src\\DisplayPad.Shared\\DisplayPad.Shared.csproj": {
+              "projectPath": "D:\\Projekte\\DisplayPad-Software\\src\\DisplayPad.Shared\\DisplayPad.Shared.csproj"
             }
           }
         }

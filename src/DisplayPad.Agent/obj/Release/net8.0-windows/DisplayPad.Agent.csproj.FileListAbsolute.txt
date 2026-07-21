@@ -17,3 +17,22 @@ D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Age
 D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\DisplayPad.Agent.pdb
 D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\DisplayPad.Agent.genruntimeconfig.cache
 D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\ref\DisplayPad.Agent.dll
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\bin\Release\net8.0-windows\DisplayPad.Agent.exe
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\bin\Release\net8.0-windows\DisplayPad.Agent.deps.json
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\bin\Release\net8.0-windows\DisplayPad.Agent.runtimeconfig.json
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\bin\Release\net8.0-windows\DisplayPad.Agent.dll
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\bin\Release\net8.0-windows\DisplayPad.Agent.pdb
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\bin\Release\net8.0-windows\DisplayPad.Shared.dll
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\bin\Release\net8.0-windows\DisplayPad.Shared.pdb
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\DisplayPad.Agent.csproj.AssemblyReference.cache
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\DisplayPad.Agent.GeneratedMSBuildEditorConfig.editorconfig
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\DisplayPad.Agent.AssemblyInfoInputs.cache
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\DisplayPad.Agent.AssemblyInfo.cs
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\DisplayPad.Agent.csproj.CoreCompileInputs.cache
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\DisplayPad.Agent.sourcelink.json
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\DisplayP.37874F11.Up2Date
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\DisplayPad.Agent.dll
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\refint\DisplayPad.Agent.dll
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\DisplayPad.Agent.pdb
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\DisplayPad.Agent.genruntimeconfig.cache
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Agent\obj\Release\net8.0-windows\ref\DisplayPad.Agent.dll

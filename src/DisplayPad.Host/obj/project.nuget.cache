@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "rWPZHvv1lqc=",
+  "dgSpecHash": "bG+6oFSIIhw=",
   "success": true,
-  "projectFilePath": "D:\\Projekte\\DisplayPad Software\\src\\DisplayPad.Host\\DisplayPad.Host.csproj",
+  "projectFilePath": "D:\\Projekte\\DisplayPad-Software\\src\\DisplayPad.Host\\DisplayPad.Host.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\nikol\\.nuget\\packages\\communitytoolkit.mvvm\\8.4.2\\communitytoolkit.mvvm.8.4.2.nupkg.sha512",
     "C:\\Users\\nikol\\.nuget\\packages\\displaypad.sdk\\1.0.7\\displaypad.sdk.1.0.7.nupkg.sha512",

@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace DisplayPad.Shared.Models;
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(LenientEnumConverter<LabelPosition>))]
 public enum LabelPosition
 {
     Top,
@@ -10,7 +10,7 @@ public enum LabelPosition
     Bottom
 }
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(LenientEnumConverter<ActionTarget>))]
 public enum ActionTarget
 {
     /// <summary>Zweitrechner (Agent).</summary>

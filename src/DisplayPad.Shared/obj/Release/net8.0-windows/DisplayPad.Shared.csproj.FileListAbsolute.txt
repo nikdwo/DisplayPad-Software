@@ -16,3 +16,12 @@ D:\Projekte\DisplayPad Software\src\DisplayPad.Shared\obj\Release\net8.0-windows
 D:\Projekte\DisplayPad Software\src\DisplayPad.Shared\obj\Release\net8.0-windows\DisplayPad.Shared.dll
 D:\Projekte\DisplayPad Software\src\DisplayPad.Shared\obj\Release\net8.0-windows\refint\DisplayPad.Shared.dll
 D:\Projekte\DisplayPad Software\src\DisplayPad.Shared\obj\Release\net8.0-windows\ref\DisplayPad.Shared.dll
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Shared\bin\Release\net8.0-windows\DisplayPad.Shared.deps.json
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Shared\bin\Release\net8.0-windows\DisplayPad.Shared.dll
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Shared\obj\Release\net8.0-windows\DisplayPad.Shared.GeneratedMSBuildEditorConfig.editorconfig
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Shared\obj\Release\net8.0-windows\DisplayPad.Shared.AssemblyInfoInputs.cache
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Shared\obj\Release\net8.0-windows\DisplayPad.Shared.AssemblyInfo.cs
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Shared\obj\Release\net8.0-windows\DisplayPad.Shared.csproj.CoreCompileInputs.cache
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Shared\obj\Release\net8.0-windows\DisplayPad.Shared.dll
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Shared\obj\Release\net8.0-windows\refint\DisplayPad.Shared.dll
+D:\Projekte\DisplayPad-Software\src\DisplayPad.Shared\obj\Release\net8.0-windows\ref\DisplayPad.Shared.dll

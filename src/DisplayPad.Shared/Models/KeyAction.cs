@@ -1,8 +1,23 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace DisplayPad.Shared.Models;
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
+/// <summary>Fällt bei unbekannten/veralteten Enum-Strings (z.B. aus einer config.json eines anderen Branches/einer älteren Version)
+/// auf default(T) zurück statt beim Laden zu crashen.</summary>
+public class LenientEnumConverter<T> : JsonConverter<T> where T : struct, Enum
+{
+    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var value = reader.GetString();
+        return value != null && Enum.TryParse<T>(value, ignoreCase: true, out var result) ? result : default;
+    }
+
+    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+        => writer.WriteStringValue(value.ToString());
+}
+
+[JsonConverter(typeof(LenientEnumConverter<KeyActionType>))]
 public enum KeyActionType
 {
     None,
@@ -14,7 +29,7 @@ public enum KeyActionType
     Folder
 }
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(LenientEnumConverter<ObsCommand>))]
 public enum ObsCommand
 {
     SetScene,
@@ -48,7 +63,7 @@ public enum ObsCommand
     ToggleSourceFilter
 }
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(LenientEnumConverter<PageSwitchMode>))]
 public enum PageSwitchMode
 {
     Next,

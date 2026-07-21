@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Projekte\\DisplayPad Software\\src\\DisplayPad.Shared\\DisplayPad.Shared.csproj": {}
+    "D:\\Projekte\\DisplayPad-Software\\src\\DisplayPad.Shared\\DisplayPad.Shared.csproj": {}
   },
   "projects": {
-    "D:\\Projekte\\DisplayPad Software\\src\\DisplayPad.Shared\\DisplayPad.Shared.csproj": {
+    "D:\\Projekte\\DisplayPad-Software\\src\\DisplayPad.Shared\\DisplayPad.Shared.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Projekte\\DisplayPad Software\\src\\DisplayPad.Shared\\DisplayPad.Shared.csproj",
+        "projectUniqueName": "D:\\Projekte\\DisplayPad-Software\\src\\DisplayPad.Shared\\DisplayPad.Shared.csproj",
         "projectName": "DisplayPad.Shared",
-        "projectPath": "D:\\Projekte\\DisplayPad Software\\src\\DisplayPad.Shared\\DisplayPad.Shared.csproj",
+        "projectPath": "D:\\Projekte\\DisplayPad-Software\\src\\DisplayPad.Shared\\DisplayPad.Shared.csproj",
         "packagesPath": "C:\\Users\\nikol\\.nuget\\packages\\",
-        "outputPath": "D:\\Projekte\\DisplayPad Software\\src\\DisplayPad.Shared\\obj\\",
+        "outputPath": "D:\\Projekte\\DisplayPad-Software\\src\\DisplayPad.Shared\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\nikol\\AppData\\Roaming\\NuGet\\NuGet.Config"
