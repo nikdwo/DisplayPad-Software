@@ -1,0 +1,186 @@
+
+***************************************************************************************************************
+TYPE == MESSAGE
+TIME :18.07.2026 14:44:18
+==> MESSAGE : Display pad Message Pump Thread Started: True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadIsDevicePlug
+TYPE == MESSAGE
+TIME :18.07.2026 14:44:18
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadIsDevicePlug
+TYPE == MESSAGE
+TIME :18.07.2026 14:44:18
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadAPEnable
+TYPE == MESSAGE
+TIME :18.07.2026 14:44:18
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadIsDevicePlug
+TYPE == MESSAGE
+TIME :18.07.2026 14:44:18
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadIsDevicePlug
+TYPE == MESSAGE
+TIME :18.07.2026 14:44:18
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadAPEnable
+TYPE == MESSAGE
+TIME :18.07.2026 14:44:18
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadAPEnable
+TYPE == MESSAGE
+TIME :18.07.2026 14:44:18
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == KeyCallBack
+TYPE == ERROR
+TIME :18.07.2026 14:56:11
+==> MESSAGE : Object reference not set to an instance of an object.
+==> STACK TRACE : at DisplayPad.Host.ViewModels.MainViewModel.RunOnUi(Action action) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\ViewModels\MainViewModel.cs:line 250
+   at DisplayPad.Host.ViewModels.MainViewModel.<.ctor>b__48_1(Int32 matrix) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\ViewModels\MainViewModel.cs:line 113
+   at DisplayPad.Host.Services.DeviceService.OnKey(Int32 keyMatrix, Int32 pressed, Int32 deviceId) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\Services\DeviceService.cs:line 57
+   at DisplayPad.SDK.DisplayPadHelper.KeyCallback(Int32 KeyMatrix, Int32 iPressed, Int32 DeviceID)
+   at DisplayPad.SDK.Helper.DisplayPadMessagePumpManager.CallBack(UInt16 wMatrix, Boolean bPressed, UInt32 ID)
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == KeyCallBack
+TYPE == ERROR
+TIME :18.07.2026 14:56:46
+==> MESSAGE : Object reference not set to an instance of an object.
+==> STACK TRACE : at DisplayPad.Host.ViewModels.MainViewModel.RunOnUi(Action action) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\ViewModels\MainViewModel.cs:line 250
+   at DisplayPad.Host.ViewModels.MainViewModel.<.ctor>b__48_1(Int32 matrix) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\ViewModels\MainViewModel.cs:line 113
+   at DisplayPad.Host.Services.DeviceService.OnKey(Int32 keyMatrix, Int32 pressed, Int32 deviceId) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\Services\DeviceService.cs:line 57
+   at DisplayPad.SDK.DisplayPadHelper.KeyCallback(Int32 KeyMatrix, Int32 iPressed, Int32 DeviceID)
+   at DisplayPad.SDK.Helper.DisplayPadMessagePumpManager.CallBack(UInt16 wMatrix, Boolean bPressed, UInt32 ID)
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == KeyCallBack
+TYPE == ERROR
+TIME :18.07.2026 14:56:47
+==> MESSAGE : Object reference not set to an instance of an object.
+==> STACK TRACE : at DisplayPad.Host.ViewModels.MainViewModel.RunOnUi(Action action) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\ViewModels\MainViewModel.cs:line 250
+   at DisplayPad.Host.ViewModels.MainViewModel.<.ctor>b__48_1(Int32 matrix) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\ViewModels\MainViewModel.cs:line 113
+   at DisplayPad.Host.Services.DeviceService.OnKey(Int32 keyMatrix, Int32 pressed, Int32 deviceId) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\Services\DeviceService.cs:line 57
+   at DisplayPad.SDK.DisplayPadHelper.KeyCallback(Int32 KeyMatrix, Int32 iPressed, Int32 DeviceID)
+   at DisplayPad.SDK.Helper.DisplayPadMessagePumpManager.CallBack(UInt16 wMatrix, Boolean bPressed, UInt32 ID)
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == KeyCallBack
+TYPE == ERROR
+TIME :18.07.2026 14:56:55
+==> MESSAGE : Object reference not set to an instance of an object.
+==> STACK TRACE : at DisplayPad.Host.ViewModels.MainViewModel.RunOnUi(Action action) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\ViewModels\MainViewModel.cs:line 250
+   at DisplayPad.Host.ViewModels.MainViewModel.<.ctor>b__48_1(Int32 matrix) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\ViewModels\MainViewModel.cs:line 113
+   at DisplayPad.Host.Services.DeviceService.OnKey(Int32 keyMatrix, Int32 pressed, Int32 deviceId) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\Services\DeviceService.cs:line 57
+   at DisplayPad.SDK.DisplayPadHelper.KeyCallback(Int32 KeyMatrix, Int32 iPressed, Int32 DeviceID)
+   at DisplayPad.SDK.Helper.DisplayPadMessagePumpManager.CallBack(UInt16 wMatrix, Boolean bPressed, UInt32 ID)
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == KeyCallBack
+TYPE == ERROR
+TIME :18.07.2026 14:56:56
+==> MESSAGE : Object reference not set to an instance of an object.
+==> STACK TRACE : at DisplayPad.Host.ViewModels.MainViewModel.RunOnUi(Action action) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\ViewModels\MainViewModel.cs:line 250
+   at DisplayPad.Host.ViewModels.MainViewModel.<.ctor>b__48_1(Int32 matrix) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\ViewModels\MainViewModel.cs:line 113
+   at DisplayPad.Host.Services.DeviceService.OnKey(Int32 keyMatrix, Int32 pressed, Int32 deviceId) in D:\GDrive\Projekte und Programme\Projekte\DisplayPad Software\src\DisplayPad.Host\Services\DeviceService.cs:line 57
+   at DisplayPad.SDK.DisplayPadHelper.KeyCallback(Int32 KeyMatrix, Int32 iPressed, Int32 DeviceID)
+   at DisplayPad.SDK.Helper.DisplayPadMessagePumpManager.CallBack(UInt16 wMatrix, Boolean bPressed, UInt32 ID)
+***************************************************************************************************************
+
+***************************************************************************************************************
+TYPE == MESSAGE
+TIME :18.07.2026 16:06:14
+==> MESSAGE : Display pad Message Pump Thread Started: True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadIsDevicePlug
+TYPE == MESSAGE
+TIME :18.07.2026 16:06:14
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadIsDevicePlug
+TYPE == MESSAGE
+TIME :18.07.2026 16:06:14
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadAPEnable
+TYPE == MESSAGE
+TIME :18.07.2026 16:06:14
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadIsDevicePlug
+TYPE == MESSAGE
+TIME :18.07.2026 16:06:14
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadIsDevicePlug
+TYPE == MESSAGE
+TIME :18.07.2026 16:06:14
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadAPEnable
+TYPE == MESSAGE
+TIME :18.07.2026 16:06:14
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************
+
+***************************************************************************************************************
+TITLE == DisplayPadAPEnable
+TYPE == MESSAGE
+TIME :18.07.2026 16:06:14
+==> MESSAGE : True
+==> STACK TRACE : 
+***************************************************************************************************************

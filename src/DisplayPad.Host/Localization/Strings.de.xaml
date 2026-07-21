@@ -1,0 +1,248 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:s="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Tabs -->
+    <s:String x:Key="TabDisplayPad">DisplayPad</s:String>
+    <s:String x:Key="TabServices">Dienste</s:String>
+    <s:String x:Key="TabSettings">Einstellungen</s:String>
+
+    <!-- Profiles -->
+    <s:String x:Key="LblProfile">Profil</s:String>
+    <s:String x:Key="TtpProfileName">Name des aktiven Profils</s:String>
+    <s:String x:Key="TtpAddProfile">Neues Profil erstellen</s:String>
+    <s:String x:Key="TtpDuplicateProfile">Aktives Profil duplizieren</s:String>
+    <s:String x:Key="TtpRemoveProfile">Aktives Profil löschen</s:String>
+    <s:String x:Key="TtpExportProfile">Aktives Profil exportieren (.dpprofile)</s:String>
+    <s:String x:Key="TtpImportProfile">Profil aus Datei importieren</s:String>
+    <s:String x:Key="TtpCopyPageToProfile">Aktive Seite in anderes Profil kopieren</s:String>
+    <s:String x:Key="TtpExportPage">Aktive Seite exportieren (.dppage)</s:String>
+    <s:String x:Key="TtpImportPage">Seite aus Datei in dieses Profil importieren</s:String>
+
+    <!-- Key grid -->
+    <s:String x:Key="LblKeys">DisplayPad-Tasten</s:String>
+    <s:String x:Key="TtpAddPage">Neue Seite</s:String>
+    <s:String x:Key="TtpRemovePage">Aktive Seite löschen</s:String>
+    <s:String x:Key="BtnLearnMode">Tasten zuordnen…</s:String>
+    <s:String x:Key="BtnLearnCancel">Zuordnung abbrechen</s:String>
+    <s:String x:Key="TtpLearnMode">Ordnet die physischen Pad-Tasten den 12 Feldern zu: Lernmodus starten und die Tasten der Reihe nach drücken (oben links bis unten rechts).</s:String>
+
+    <!-- Editor -->
+    <s:String x:Key="LblKeyPrefix">Taste</s:String>
+    <s:String x:Key="LblLabel">Beschriftung</s:String>
+    <s:String x:Key="LblFont">Schrift</s:String>
+    <s:String x:Key="CbPosTop">Oben</s:String>
+    <s:String x:Key="CbPosCenter">Mitte</s:String>
+    <s:String x:Key="CbPosBottom">Unten</s:String>
+    <s:String x:Key="TtpLabelPos">Position der Beschriftung auf der Taste</s:String>
+    <s:String x:Key="TtpFontSize">Schriftgröße</s:String>
+    <s:String x:Key="CbBold">Fett</s:String>
+    <s:String x:Key="CbItalic">Kursiv</s:String>
+    <s:String x:Key="LblIcon">Icon</s:String>
+    <s:String x:Key="BtnBrowse">Durchsuchen…</s:String>
+    <s:String x:Key="LblAction">Aktion</s:String>
+    <s:String x:Key="BtnTestAction">Aktion jetzt testen</s:String>
+
+    <!-- Action types -->
+    <s:String x:Key="AcNone">Keine Aktion</s:String>
+    <s:String x:Key="AcHotkey">Hotkey senden</s:String>
+    <s:String x:Key="AcCommand">Befehl ausführen</s:String>
+    <s:String x:Key="AcSwitchPage">Seite wechseln</s:String>
+    <s:String x:Key="AcObs">OBS steuern</s:String>
+    <s:String x:Key="AcNvidia">NVIDIA Overlay</s:String>
+
+    <!-- NVIDIA -->
+    <s:String x:Key="LblNvidiaHint">NVIDIA-Funktion (Hotkey wird live aus der NVIDIA-App gelesen)</s:String>
+    <s:String x:Key="NvDvrSave">Instant Replay speichern</s:String>
+    <s:String x:Key="NvDvrToggle">Instant Replay ein/aus</s:String>
+    <s:String x:Key="NvRecordToggle">Aufnahme starten/stoppen</s:String>
+    <s:String x:Key="NvScreenshot">Screenshot</s:String>
+    <s:String x:Key="NvMicToggle">Mikrofon umschalten</s:String>
+    <s:String x:Key="NvOpenIgo">Overlay öffnen</s:String>
+    <s:String x:Key="NvPmocOverlay">Leistungs-Overlay</s:String>
+    <s:String x:Key="NvOpenAnsel">Fotomodus (Ansel)</s:String>
+    <s:String x:Key="NvOpenFreestyle">Spielfilter (Freestyle)</s:String>
+
+    <!-- OBS commands -->
+    <s:String x:Key="LblObsCommand">OBS-Befehl</s:String>
+    <s:String x:Key="ObsSetScene">Szene wechseln</s:String>
+    <s:String x:Key="ObsToggleStream">Stream umschalten</s:String>
+    <s:String x:Key="ObsStartStream">Stream starten</s:String>
+    <s:String x:Key="ObsStopStream">Stream stoppen</s:String>
+    <s:String x:Key="ObsToggleRecord">Aufnahme umschalten</s:String>
+    <s:String x:Key="ObsStartRecord">Aufnahme starten</s:String>
+    <s:String x:Key="ObsStopRecord">Aufnahme stoppen</s:String>
+    <s:String x:Key="ObsToggleMute">Quelle stummschalten (umschalten)</s:String>
+    <s:String x:Key="ObsSaveReplayBuffer">Replay Buffer speichern</s:String>
+    <s:String x:Key="ObsStartReplayBuffer">Replay Buffer starten</s:String>
+    <s:String x:Key="ObsStopReplayBuffer">Replay Buffer stoppen</s:String>
+    <s:String x:Key="ObsToggleReplayBuffer">Replay Buffer ein/aus</s:String>
+    <s:String x:Key="ObsPauseRecord">Aufnahme pausieren</s:String>
+    <s:String x:Key="ObsResumeRecord">Aufnahme fortsetzen</s:String>
+    <s:String x:Key="ObsToggleRecordPause">Aufnahme Pause ein/aus</s:String>
+    <s:String x:Key="ObsStartVirtualCam">Virtuelle Kamera starten</s:String>
+    <s:String x:Key="ObsStopVirtualCam">Virtuelle Kamera stoppen</s:String>
+    <s:String x:Key="ObsToggleVirtualCam">Virtuelle Kamera ein/aus</s:String>
+    <s:String x:Key="ObsSetPreviewScene">Vorschau-Szene setzen</s:String>
+    <s:String x:Key="ObsTriggerTransition">Übergang auslösen (Studio-Modus)</s:String>
+    <s:String x:Key="ObsTriggerHotkey">OBS-Hotkey auslösen</s:String>
+    <s:String x:Key="ObsToggleSceneItem">Quelle ein-/ausblenden</s:String>
+    <s:String x:Key="ObsToggleSourceFilter">Filter ein-/ausschalten</s:String>
+
+    <!-- OBS parameter labels -->
+    <s:String x:Key="LblObsParamScene">Szene (bei Verbindung aus OBS geladen)</s:String>
+    <s:String x:Key="LblObsParamSource">Quelle (bei Verbindung aus OBS geladen)</s:String>
+    <s:String x:Key="LblObsParamSourceName">Quellenname (bei Verbindung aus OBS geladen)</s:String>
+    <s:String x:Key="LblObsParamHotkeyName">OBS-Hotkey-Name (z.B. "ReplayBuffer.Save")</s:String>
+    <s:String x:Key="LblObsParam2Source">Quellenname</s:String>
+    <s:String x:Key="LblObsParam2Filter">Filtername</s:String>
+
+    <!-- Page switch -->
+    <s:String x:Key="LblPageSwitch">Seitenwechsel</s:String>
+    <s:String x:Key="PsNext">Nächste Seite</s:String>
+    <s:String x:Key="PsPrev">Vorherige Seite</s:String>
+    <s:String x:Key="PsGoto">Bestimmte Seite</s:String>
+    <s:String x:Key="LblPageNumber">Seitennummer:</s:String>
+
+    <!-- Target -->
+    <s:String x:Key="LblExecuteOn">Ausführen auf</s:String>
+    <s:String x:Key="TgtRemote">Zweitrechner</s:String>
+    <s:String x:Key="TgtLocal">Hauptrechner (dieser PC)</s:String>
+    <s:String x:Key="TgtBoth">Beiden Rechnern</s:String>
+
+    <!-- Hotkey panel -->
+    <s:String x:Key="LblHotkeyHint">Tastenkombination (hier klicken und Kombination drücken)</s:String>
+    <s:String x:Key="TtpHotkeyBox">z.B. Ctrl+Alt+F1 – auch Medien-Tasten wie MediaPlayPause per Hand eintragbar</s:String>
+
+    <!-- Command panel -->
+    <s:String x:Key="LblCommandHint">Befehlszeile (läuft via cmd /c)</s:String>
+    <s:String x:Key="TtpCommandBox">z.B. start "" "C:\Program Files\obs-studio\bin\64bit\obs64.exe"</s:String>
+    <s:String x:Key="LblWorkDir">Arbeitsverzeichnis (optional)</s:String>
+
+    <!-- Footer buttons -->
+    <s:String x:Key="BtnResetMappings">Alte Belegung löschen…</s:String>
+    <s:String x:Key="TtpResetMappings">Entfernt die im Pad gespeicherte Belegung (z.B. alte Base-Camp-Makros) dauerhaft aus dem Gerät.</s:String>
+    <s:String x:Key="BtnSave">Speichern</s:String>
+    <s:String x:Key="BtnUpload">Auf Gerät übertragen</s:String>
+
+    <!-- Tab 2: Services -->
+    <s:String x:Key="LblRemoteSection">Remote-Agent</s:String>
+    <s:String x:Key="BtnRemoteSettings">Remote-Einstellungen</s:String>
+    <s:String x:Key="TtpRemoteSettings">Einstellungen für den Zweitrechner-Agent (IP, Port, Token)</s:String>
+    <s:String x:Key="LblObsSection">OBS WebSocket</s:String>
+    <s:String x:Key="BtnObsSettings">OBS-Einstellungen</s:String>
+    <s:String x:Key="TtpObsSettings">Einstellungen für die OBS-WebSocket-Verbindung (Host, Port, Passwort)</s:String>
+    <s:String x:Key="LblBaseCampSection">Mountain Base Camp</s:String>
+    <s:String x:Key="BtnDisableBaseCamp">Base Camp deaktivieren</s:String>
+    <s:String x:Key="BtnEnableBaseCamp">Base Camp aktivieren</s:String>
+    <s:String x:Key="TtpDisableBaseCamp">Stoppt den Dienst BaseCampService und stellt den Starttyp auf Deaktiviert (Adminrechte nötig).</s:String>
+    <s:String x:Key="TtpEnableBaseCamp">Stellt den Starttyp auf Automatisch und startet den Dienst wieder (Adminrechte nötig).</s:String>
+
+    <!-- Tab 3: Settings -->
+    <s:String x:Key="LblAutostartSection">Autostart</s:String>
+    <s:String x:Key="CbAutostartText">DisplayPad Host beim Windows-Start automatisch starten</s:String>
+    <s:String x:Key="LblLanguageSection">Sprache / Language</s:String>
+    <s:String x:Key="LblAboutSection">Über</s:String>
+    <s:String x:Key="LblDeveloper">Entwickler</s:String>
+    <s:String x:Key="LblVersionLabel">Version</s:String>
+
+    <!-- Remote settings dialog -->
+    <s:String x:Key="DlgRemoteTitle">Zweitrechner (Remote-Agent)</s:String>
+    <s:String x:Key="LblRemoteHost">IP/Host des Zweitrechners</s:String>
+    <s:String x:Key="LblRemotePort">Port</s:String>
+    <s:String x:Key="LblRemoteToken">Token (vom Agent, Tray-Menü „Token kopieren")</s:String>
+    <s:String x:Key="BtnCancel">Abbrechen</s:String>
+    <s:String x:Key="MsgInvalidPort">Ungültiger Port.</s:String>
+    <s:String x:Key="MsgRemoteTitle">Zweitrechner</s:String>
+
+    <!-- OBS settings dialog -->
+    <s:String x:Key="DlgObsHint">Voraussetzung: OBS 28+ mit aktiviertem WebSocket-Server (OBS → Werkzeuge → WebSocket-Servereinstellungen). OBS kann auf diesem oder dem Zweitrechner laufen.</s:String>
+    <s:String x:Key="LblObsHostField">IP/Host (127.0.0.1 = dieser Rechner)</s:String>
+    <s:String x:Key="LblObsPasswordField">Passwort (leer, falls in OBS deaktiviert)</s:String>
+    <s:String x:Key="BtnTestConn">Verbindung testen</s:String>
+    <s:String x:Key="TxtTesting">Teste Verbindung…</s:String>
+    <s:String x:Key="MsgConnSuccess">Verbindung erfolgreich!</s:String>
+    <s:String x:Key="MsgObsTimeout">Zeitüberschreitung – OBS unter dieser Adresse nicht erreichbar.</s:String>
+
+    <!-- Status messages -->
+    <s:String x:Key="MsgSaved">Konfiguration gespeichert.</s:String>
+    <s:String x:Key="MsgDeviceConnected">DisplayPad: verbunden</s:String>
+    <s:String x:Key="MsgDeviceDisconnected">DisplayPad: getrennt</s:String>
+    <s:String x:Key="MsgDeviceNotFound">DisplayPad: nicht gefunden</s:String>
+    <s:String x:Key="MsgTakeControlOk">Software-Kontrolle über das Pad übernommen.</s:String>
+    <s:String x:Key="MsgTakeControlFail">Software-Kontrolle konnte nicht übernommen werden (APEnable fehlgeschlagen).</s:String>
+    <s:String x:Key="MsgAgentDisconnected">Agent: nicht erreichbar</s:String>
+    <s:String x:Key="MsgAgentConnected">Agent: verbunden ({0})</s:String>
+    <s:String x:Key="MsgObsConnected">OBS: verbunden</s:String>
+    <s:String x:Key="MsgObsDisconnected">OBS: nicht verbunden</s:String>
+    <s:String x:Key="MsgOnePage">Nur eine Seite vorhanden.</s:String>
+    <s:String x:Key="MsgLastPage">Die letzte Seite kann nicht gelöscht werden.</s:String>
+    <s:String x:Key="MsgLastProfile">Das letzte Profil kann nicht gelöscht werden.</s:String>
+    <s:String x:Key="MsgPageActive">Aktive Seite: {0}</s:String>
+    <s:String x:Key="MsgProfileActive">Aktives Profil: {0}</s:String>
+    <s:String x:Key="MsgPageCopied">Seite „{0}" in Profil „{1}" kopiert.</s:String>
+    <s:String x:Key="MsgProfileExported">Profil exportiert.</s:String>
+    <s:String x:Key="MsgProfileImported">Profil „{0}" importiert.</s:String>
+    <s:String x:Key="MsgPageExported">Seite exportiert.</s:String>
+    <s:String x:Key="MsgPageImported">Seite „{0}" importiert.</s:String>
+    <s:String x:Key="MsgImportFailed">Import fehlgeschlagen – ungültige Datei.</s:String>
+    <s:String x:Key="MsgNoOtherProfile">Keine anderen Profile vorhanden</s:String>
+    <s:String x:Key="MsgNoDeviceUpload">Kein DisplayPad gefunden – ist es angeschlossen (und Base Camp beendet)?</s:String>
+    <s:String x:Key="MsgUploading">Übertrage Tastenbilder…</s:String>
+    <s:String x:Key="MsgUploadDone">{0}: {1}/12 Tastenbilder übertragen.</s:String>
+    <s:String x:Key="MsgDisablingBC">Deaktiviere Base-Camp-Dienst (Adminrechte erforderlich)…</s:String>
+    <s:String x:Key="MsgBCDisabled">Base-Camp-Dienst gestoppt und deaktiviert.</s:String>
+    <s:String x:Key="MsgBCDisableFail">Base Camp deaktivieren fehlgeschlagen: {0}</s:String>
+    <s:String x:Key="MsgEnablingBC">Aktiviere Base-Camp-Dienst (Adminrechte erforderlich)…</s:String>
+    <s:String x:Key="MsgBCEnabled">Base-Camp-Dienst aktiviert und gestartet.</s:String>
+    <s:String x:Key="MsgBCEnableFail">Base Camp aktivieren fehlgeschlagen: {0}</s:String>
+    <s:String x:Key="MsgResetting">Setze Pad-Belegung zurück…</s:String>
+    <s:String x:Key="MsgResetOk">Alte Belegung im Pad gelöscht. Jetzt „Auf Gerät übertragen" für die neuen Icons.</s:String>
+    <s:String x:Key="MsgResetFail">Zurücksetzen fehlgeschlagen – ist das Pad verbunden?</s:String>
+    <s:String x:Key="MsgNoAction">Keine Aktion zum Testen konfiguriert.</s:String>
+    <s:String x:Key="MsgOBSDone">OBS-Befehl ausgeführt</s:String>
+    <s:String x:Key="MsgOBSError">OBS-Fehler – {0}</s:String>
+    <s:String x:Key="MsgNvidiaDone">NVIDIA-Funktion ausgelöst</s:String>
+    <s:String x:Key="MsgNvidiaError">NVIDIA-Fehler – {0}</s:String>
+    <s:String x:Key="MsgLocalOk">lokal ok</s:String>
+    <s:String x:Key="MsgLocalError">lokal Fehler: {0}</s:String>
+    <s:String x:Key="MsgRemoteOk">Zweitrechner ok</s:String>
+    <s:String x:Key="MsgRemoteError">Zweitrechner Fehler: {0}</s:String>
+    <s:String x:Key="MsgKeyPressed">Taste gedrückt (KeyMatrix-Code {0})</s:String>
+    <s:String x:Key="MsgNoDevice">Kein DisplayPad gefunden – Lernmodus nicht möglich.</s:String>
+    <s:String x:Key="MsgLearnAborted">Lernmodus abgebrochen – Zuordnung unverändert.</s:String>
+    <s:String x:Key="MsgLearnMode">Lernmodus: Drücke am Pad die Taste {0} ({1}/12)…</s:String>
+    <s:String x:Key="MsgLearnDupe">Code {0} ist schon Taste {1} zugeordnet – bitte die Taste {2} drücken ({3}/12).</s:String>
+    <s:String x:Key="MsgLearnDone">Tastenzuordnung gelernt und gespeichert – die Pad-Tasten lösen jetzt die richtigen Aktionen aus.</s:String>
+
+    <!-- Learn mode key positions -->
+    <s:String x:Key="LearnPos0">oben links</s:String>
+    <s:String x:Key="LearnPos1">oben 2</s:String>
+    <s:String x:Key="LearnPos2">oben 3</s:String>
+    <s:String x:Key="LearnPos3">oben 4</s:String>
+    <s:String x:Key="LearnPos4">oben 5</s:String>
+    <s:String x:Key="LearnPos5">oben rechts</s:String>
+    <s:String x:Key="LearnPos6">unten links</s:String>
+    <s:String x:Key="LearnPos7">unten 2</s:String>
+    <s:String x:Key="LearnPos8">unten 3</s:String>
+    <s:String x:Key="LearnPos9">unten 4</s:String>
+    <s:String x:Key="LearnPos10">unten 5</s:String>
+    <s:String x:Key="LearnPos11">unten rechts</s:String>
+
+    <!-- MessageBox / dialogs -->
+    <s:String x:Key="MsgBoxResetTitle">Alte Belegung löschen</s:String>
+    <s:String x:Key="MsgBoxResetText">Die im Pad gespeicherte Tastenbelegung (z.B. alte Base-Camp-Makros) wird auf Werksstandard zurückgesetzt und die Tastenbilder des aktiven Profils werden gelöscht.
+
+Danach führt das Pad keine alten Befehle mehr selbstständig aus. Fortfahren?</s:String>
+    <s:String x:Key="DlgIconTitle">Icon auswählen</s:String>
+    <s:String x:Key="DlgIconFilter">Bilder (*.png;*.jpg;*.jpeg;*.bmp;*.gif)|*.png;*.jpg;*.jpeg;*.bmp;*.gif|Alle Dateien (*.*)|*.*</s:String>
+
+    <!-- Folder -->
+    <s:String x:Key="AcFolder">Ordner öffnen</s:String>
+    <s:String x:Key="LblFolderHint">Öffnet eine Unterebene mit 12 weiteren Tasten. Taste 12 (unten rechts) verlässt den Ordner automatisch.</s:String>
+    <s:String x:Key="BtnEditFolder">Ordner-Inhalt bearbeiten…</s:String>
+    <s:String x:Key="MsgFolderEntered">Ordner (Taste {0}) geöffnet</s:String>
+    <s:String x:Key="MsgFolderExited">Ordner verlassen</s:String>
+    <s:String x:Key="MsgFolderEmpty">Ordner ist leer.</s:String>
+
+</ResourceDictionary>

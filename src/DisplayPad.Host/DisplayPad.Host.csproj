@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\DisplayPad.Shared\DisplayPad.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WinForms nur für das NotifyIcon; die globalen Usings kollidieren sonst mit WPF-Typen -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="DisplayPad.SDK" Version="1.0.7" />
+    <PackageReference Include="obs-websocket-dotnet" Version="5.0.1" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.10" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.10" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,19 @@
+2026-07-17 15:23:50 [INFO] Agent startet auf http://0.0.0.0:5599
+2026-07-17 15:24:04 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 15:24:04 [INFO] Befehl: echo agent-test-ok > "C:\\Users\\nikol\\AppData\\Local\\Temp\\displaypad-agent-test.txt"
+2026-07-17 15:24:06 [INFO] Hotkey: Foo+Bar
+2026-07-17 15:24:06 [ERROR] Ausführung fehlgeschlagen: Unbekannte Taste: 'Foo'
+2026-07-17 15:24:23 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 15:24:28 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 15:24:33 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 15:24:38 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 15:24:43 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 15:24:48 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 15:24:53 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 15:24:58 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 15:25:03 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 15:25:08 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 15:25:13 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 15:25:18 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 15:25:23 [ERROR] Abgelehnte Anfrage von 127.0.0.1 (ungültiges Token)
+2026-07-17 16:51:50 [INFO] Agent startet auf http://0.0.0.0:5599
