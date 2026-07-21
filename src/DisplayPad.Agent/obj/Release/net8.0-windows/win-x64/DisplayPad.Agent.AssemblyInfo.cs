@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DisplayPad.Agent")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+aa0e6b4078a522390550e363ba5ca71943151b8d")]
 [assembly: System.Reflection.AssemblyProductAttribute("DisplayPad.Agent")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DisplayPad.Agent")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
