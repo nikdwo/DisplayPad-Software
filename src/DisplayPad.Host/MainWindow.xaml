@@ -8,7 +8,7 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         Title="DisplayPad Remote" Height="640" Width="980"
-        MinWidth="881" MinHeight="640"
+        ResizeMode="NoResize"
         Background="#141414" Foreground="#EBEBEB"
         WindowStartupLocation="CenterScreen">
 
