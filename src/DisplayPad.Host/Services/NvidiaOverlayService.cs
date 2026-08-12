@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using DisplayPad.Shared.Execution;
+using DisplayPad.Shared.Models;
 
 namespace DisplayPad.Host.Services;
 
@@ -41,27 +42,26 @@ public static class NvidiaOverlayService
         }
     }
 
-    /// <returns>null bei Erfolg, sonst Fehlertext.</returns>
-    public static string? Execute(string? function)
+    public static OperationResult Execute(string? function)
     {
         if (string.IsNullOrWhiteSpace(function))
-            return "Keine NVIDIA-Funktion ausgewählt";
+            return OperationResult.Fail(OperationErrorCode.NvidiaFunctionMissing);
 
         if (!File.Exists(SettingsPath))
-            return "NVIDIA-Overlay-Konfiguration nicht gefunden (ist die NVIDIA App installiert?)";
+            return OperationResult.Fail(OperationErrorCode.NvidiaConfigMissing);
 
         var bindings = ReadBindings();
         if (!bindings.TryGetValue(function, out var vkCodes) || vkCodes.Length == 0)
-            return "In der NVIDIA-App ist für diese Funktion keine Tastenkombination hinterlegt";
+            return OperationResult.Fail(OperationErrorCode.NvidiaBindingMissing);
 
         try
         {
             HotkeyExecutor.SendVirtualKeys(vkCodes);
-            return null;
+            return OperationResult.Ok();
         }
         catch (Exception ex)
         {
-            return ex.Message;
+            return OperationResult.Fail(OperationErrorCode.Unknown, ex.Message);
         }
     }
 }

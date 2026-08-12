@@ -7,7 +7,7 @@
         xmlns:models="clr-namespace:DisplayPad.Shared.Models;assembly=DisplayPad.Shared"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
-        Title="DisplayPad Remote" Height="640" Width="980"
+        Title="{DynamicResource AppTitle}" Height="640" Width="980"
         ResizeMode="NoResize"
         Background="#141414" Foreground="#EBEBEB"
         WindowStartupLocation="CenterScreen">
@@ -221,7 +221,7 @@
                                             </ComboBox.ItemTemplate>
                                         </ComboBox>
                                         <TextBox Width="110" Text="{Binding ActivePage.Name, UpdateSourceTrigger=PropertyChanged}"
-                                                 ToolTip="Name der aktiven Seite" Margin="0,0,6,0"/>
+                                                 ToolTip="{DynamicResource TtpPageName}" Margin="0,0,6,0"/>
                                         <Button Content="+" Command="{Binding AddPageCommand}" Padding="9,5"
                                                 Margin="0,0,4,0" ToolTip="{DynamicResource TtpAddPage}"/>
                                         <Button Content="–" Command="{Binding RemovePageCommand}" Padding="9,5"
@@ -248,7 +248,7 @@
                                         </Style>
                                     </Border.Style>
                                     <DockPanel>
-                                        <Button DockPanel.Dock="Right" Content="← Zurück"
+                                        <Button DockPanel.Dock="Right" Content="{DynamicResource BtnBack}"
                                                 Command="{Binding ExitFolderEditorCommand}"
                                                 Padding="8,3" Margin="8,0,0,0"/>
                                         <TextBlock Text="{Binding EditorBreadcrumb}"
@@ -737,7 +737,7 @@
                                         </Style>
                                     </Ellipse.Style>
                                 </Ellipse>
-                                <TextBlock Text="🖥  Remote Agent" FontWeight="Bold" FontSize="14"
+                                <TextBlock Text="{DynamicResource LblRemoteSection}" FontWeight="Bold" FontSize="14"
                                            VerticalAlignment="Center"/>
                             </DockPanel>
                             <Border Height="1" Background="#2C2C2C" Margin="0,0,0,12"/>
@@ -766,7 +766,7 @@
                                         </Style>
                                     </Ellipse.Style>
                                 </Ellipse>
-                                <TextBlock Text="🎬  OBS Studio" FontWeight="Bold" FontSize="14"
+                                <TextBlock Text="{DynamicResource LblObsSection}" FontWeight="Bold" FontSize="14"
                                            VerticalAlignment="Center"/>
                             </DockPanel>
                             <Border Height="1" Background="#2C2C2C" Margin="0,0,0,12"/>
@@ -795,7 +795,7 @@
                                         </Style>
                                     </Ellipse.Style>
                                 </Ellipse>
-                                <TextBlock Text="🏔  Mountain Base Camp" FontWeight="Bold" FontSize="14"
+                                <TextBlock Text="{DynamicResource LblBaseCampSection}" FontWeight="Bold" FontSize="14"
                                            VerticalAlignment="Center"/>
                             </DockPanel>
                             <Border Height="1" Background="#2C2C2C" Margin="0,0,0,12"/>
@@ -851,8 +851,8 @@
                         <Border Background="#1C1C1C" CornerRadius="8" BorderBrush="#2C2C2C" BorderThickness="1" Padding="14" Margin="0,0,0,16">
                             <ComboBox SelectedValue="{Binding Language}" SelectedValuePath="Tag" Width="200"
                                       HorizontalAlignment="Left">
-                                <ComboBoxItem Content="Deutsch" Tag="de"/>
-                                <ComboBoxItem Content="English" Tag="en"/>
+                                <ComboBoxItem Content="{DynamicResource LanguageGerman}" Tag="de"/>
+                                <ComboBoxItem Content="{DynamicResource LanguageEnglish}" Tag="en"/>
                             </ComboBox>
                         </Border>
 
@@ -870,7 +870,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{DynamicResource LblDeveloper}"
                                                Foreground="#7A7A7A"/>
-                                    <TextBlock Grid.Column="1" Text="ItzMayzTV"/>
+                                    <TextBlock Grid.Column="1" Text="{DynamicResource CreatorName}"/>
                                 </Grid>
                                 <Grid>
                                     <Grid.ColumnDefinitions>

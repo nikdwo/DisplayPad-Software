@@ -7,13 +7,26 @@ namespace DisplayPad.Host.Services;
 /// Verbindung zu OBS über obs-websocket (v5, OBS 28+).
 /// Verbindet lazy; EnsureConnecting() wird periodisch vom Status-Timer aufgerufen.
 /// </summary>
-public class ObsService
+public interface IObsService : IDisposable
 {
-    private OBSWebsocket _obs = new();
+    bool IsConnected { get; }
+    void Configure(string host, int port, string password);
+    void EnsureConnecting();
+    OperationResult Execute(KeyAction action);
+    List<string> GetSceneNames();
+    List<string> GetInputNames();
+}
+
+public sealed class ObsService : IObsService
+{
+    private OBSWebsocket _obs;
     private string _host = "127.0.0.1";
     private int _port = 4455;
     private string _password = "";
     private bool _connecting;
+    private bool _disposed;
+
+    public ObsService() => _obs = CreateClient();
 
     public bool IsConnected => _obs.IsConnected;
 
@@ -28,7 +41,9 @@ public class ObsService
 
         // Einstellungen geändert: alte Verbindung kappen, Timer verbindet neu
         try { if (_obs.IsConnected) _obs.Disconnect(); } catch { /* alte Verbindung ist egal */ }
-        _obs = new OBSWebsocket();
+        _obs.Connected -= OnConnected;
+        _obs.Disconnected -= OnDisconnected;
+        _obs = CreateClient();
         _connecting = false;
     }
 
@@ -40,8 +55,6 @@ public class ObsService
 
         _connecting = true;
         var obs = _obs;
-        obs.Connected += (_, _) => _connecting = false;
-        obs.Disconnected += (_, _) => _connecting = false;
         try
         {
             obs.ConnectAsync($"ws://{_host}:{_port}", _password);
@@ -52,11 +65,10 @@ public class ObsService
         }
     }
 
-    /// <returns>null bei Erfolg, sonst Fehlertext.</returns>
-    public string? Execute(KeyAction action)
+    public OperationResult Execute(KeyAction action)
     {
         if (!_obs.IsConnected)
-            return "OBS ist nicht verbunden";
+            return OperationResult.Fail(OperationErrorCode.ObsNotConnected);
 
         try
         {
@@ -64,7 +76,7 @@ public class ObsService
             {
                 case ObsCommand.SetScene:
                     if (string.IsNullOrWhiteSpace(action.ObsParameter))
-                        return "Kein Szenenname angegeben";
+                        return OperationResult.Fail(OperationErrorCode.ObsSceneMissing);
                     _obs.SetCurrentProgramScene(action.ObsParameter);
                     break;
                 case ObsCommand.ToggleStream: _obs.ToggleStream(); break;
@@ -75,7 +87,7 @@ public class ObsService
                 case ObsCommand.StopRecord: _obs.StopRecord(); break;
                 case ObsCommand.ToggleMute:
                     if (string.IsNullOrWhiteSpace(action.ObsParameter))
-                        return "Kein Quellenname angegeben";
+                        return OperationResult.Fail(OperationErrorCode.ObsSourceMissing);
                     _obs.ToggleInputMute(action.ObsParameter);
                     break;
                 // Replay Buffer
@@ -94,7 +106,7 @@ public class ObsService
                 // Studio-Modus
                 case ObsCommand.SetPreviewScene:
                     if (string.IsNullOrWhiteSpace(action.ObsParameter))
-                        return "Kein Szenenname angegeben";
+                        return OperationResult.Fail(OperationErrorCode.ObsSceneMissing);
                     _obs.SetCurrentPreviewScene(action.ObsParameter);
                     break;
                 case ObsCommand.TriggerTransition:
@@ -103,15 +115,15 @@ public class ObsService
                 // OBS-Hotkey
                 case ObsCommand.TriggerHotkeyByName:
                     if (string.IsNullOrWhiteSpace(action.ObsParameter))
-                        return "Kein Hotkey-Name angegeben";
+                        return OperationResult.Fail(OperationErrorCode.ObsHotkeyMissing);
                     _obs.TriggerHotkeyByName(action.ObsParameter);
                     break;
                 // Quelle ein-/ausblenden
                 case ObsCommand.ToggleSceneItem:
                     if (string.IsNullOrWhiteSpace(action.ObsParameter))
-                        return "Kein Szenenname angegeben";
+                        return OperationResult.Fail(OperationErrorCode.ObsSceneMissing);
                     if (string.IsNullOrWhiteSpace(action.ObsParameter2))
-                        return "Kein Quellenname angegeben";
+                        return OperationResult.Fail(OperationErrorCode.ObsSourceMissing);
                     {
                         var itemId = _obs.GetSceneItemId(action.ObsParameter, action.ObsParameter2, 0);
                         var enabled = _obs.GetSceneItemEnabled(action.ObsParameter, itemId);
@@ -121,22 +133,22 @@ public class ObsService
                 // Filter ein-/ausschalten
                 case ObsCommand.ToggleSourceFilter:
                     if (string.IsNullOrWhiteSpace(action.ObsParameter))
-                        return "Kein Quellenname angegeben";
+                        return OperationResult.Fail(OperationErrorCode.ObsSourceMissing);
                     if (string.IsNullOrWhiteSpace(action.ObsParameter2))
-                        return "Kein Filtername angegeben";
+                        return OperationResult.Fail(OperationErrorCode.ObsFilterMissing);
                     {
                         var filter = _obs.GetSourceFilter(action.ObsParameter, action.ObsParameter2);
                         _obs.SetSourceFilterEnabled(action.ObsParameter, action.ObsParameter2, !filter.IsEnabled);
                     }
                     break;
                 default:
-                    return "Unbekannter OBS-Befehl";
+                    return OperationResult.Fail(OperationErrorCode.ObsUnknownCommand);
             }
-            return null;
+            return OperationResult.Ok();
         }
         catch (Exception ex)
         {
-            return ex.Message;
+            return OperationResult.Fail(OperationErrorCode.Unknown, ex.Message);
         }
     }
 
@@ -169,33 +181,57 @@ public class ObsService
     }
 
     /// <summary>Blockierender Verbindungstest mit eigener Instanz (für den Einstellungsdialog).</summary>
-    public static string? TestConnection(string host, int port, string password)
+    public static OperationResult TestConnection(string host, int port, string password)
     {
         var obs = new OBSWebsocket();
-        var done = new ManualResetEventSlim();
-        string? error = null;
+        using var done = new ManualResetEventSlim();
+        OperationResult result = OperationResult.Ok();
 
-        obs.Connected += (_, _) => done.Set();
-        obs.Disconnected += (_, info) =>
+        EventHandler connected = (_, _) => done.Set();
+        EventHandler<OBSWebsocketDotNet.Communication.ObsDisconnectionInfo> disconnected = (_, info) =>
         {
-            error = info.DisconnectReason ?? "Verbindung fehlgeschlagen (läuft der WebSocket-Server? Passwort korrekt?)";
+            result = OperationResult.Fail(OperationErrorCode.ObsConnectionFailed, info.DisconnectReason);
             done.Set();
         };
+        obs.Connected += connected;
+        obs.Disconnected += disconnected;
 
         try
         {
             obs.ConnectAsync($"ws://{host}:{port}", password);
             if (!done.Wait(TimeSpan.FromSeconds(6)))
-                error = "Zeitüberschreitung – OBS unter dieser Adresse nicht erreichbar.";
+                result = OperationResult.Fail(OperationErrorCode.ObsConnectionTimeout);
         }
         catch (Exception ex)
         {
-            error = ex.Message;
+            result = OperationResult.Fail(OperationErrorCode.ObsConnectionFailed, ex.Message);
         }
         finally
         {
+            obs.Connected -= connected;
+            obs.Disconnected -= disconnected;
             try { obs.Disconnect(); } catch { /* Testverbindung */ }
         }
-        return error;
+        return result;
+    }
+
+    private OBSWebsocket CreateClient()
+    {
+        var obs = new OBSWebsocket();
+        obs.Connected += OnConnected;
+        obs.Disconnected += OnDisconnected;
+        return obs;
+    }
+
+    private void OnConnected(object? sender, EventArgs e) => _connecting = false;
+    private void OnDisconnected(object? sender, OBSWebsocketDotNet.Communication.ObsDisconnectionInfo e) => _connecting = false;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _obs.Connected -= OnConnected;
+        _obs.Disconnected -= OnDisconnected;
+        try { if (_obs.IsConnected) _obs.Disconnect(); } catch { }
     }
 }

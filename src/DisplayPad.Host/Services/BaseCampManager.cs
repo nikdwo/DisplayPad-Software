@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.ServiceProcess;
+using DisplayPad.Shared.Models;
 
 namespace DisplayPad.Host.Services;
 
@@ -13,23 +14,6 @@ public enum BaseCampState
 
 public record BaseCampStatus(BaseCampState State, string StartType, bool WorkerRunning)
 {
-    private string StartTypeGerman => StartType switch
-    {
-        "Automatic" => "Automatisch",
-        "Manual" => "Manuell",
-        "Disabled" => "Deaktiviert",
-        _ => StartType
-    };
-
-    public string Description => State switch
-    {
-        BaseCampState.NotInstalled => "Base Camp: nicht installiert",
-        BaseCampState.Running => $"Base Camp: Dienst läuft (Starttyp: {StartTypeGerman}) – Konflikt mit dem Pad möglich!",
-        _ => StartType == "Disabled"
-            ? "Base Camp: Dienst deaktiviert"
-            : $"Base Camp: Dienst gestoppt (Starttyp: {StartTypeGerman})"
-    };
-
     /// <summary>true, wenn Base Camp dem Pad gerade in die Quere kommen kann.</summary>
     public bool IsConflict => State == BaseCampState.Running || WorkerRunning;
 }
@@ -59,19 +43,33 @@ public static class BaseCampManager
         }
     }
 
-    /// <returns>null bei Erfolg, sonst Fehlertext.</returns>
-    public static string? Disable() => RunElevated(
-        $"Stop-Service -Name {ServiceName} -Force; " +
-        $"Set-Service -Name {ServiceName} -StartupType Disabled; " +
-        "Stop-Process -Name MountainDisplayPadWorker -Force -ErrorAction SilentlyContinue; " +
-        "Stop-Process -Name 'BaseCamp.Service' -Force -ErrorAction SilentlyContinue");
+    public static OperationResult Disable()
+    {
+        var error = RunElevated(
+            $"Stop-Service -Name {ServiceName} -Force; " +
+            $"Set-Service -Name {ServiceName} -StartupType Disabled; " +
+            "Stop-Process -Name MountainDisplayPadWorker -Force -ErrorAction SilentlyContinue; " +
+            "Stop-Process -Name 'BaseCamp.Service' -Force -ErrorAction SilentlyContinue");
+        if (!error.Success) return error;
+        var status = GetStatus();
+        return status.IsConflict || status.StartType != "Disabled"
+            ? OperationResult.Fail(OperationErrorCode.BaseCampDesiredStateNotReached)
+            : OperationResult.Ok();
+    }
 
-    /// <returns>null bei Erfolg, sonst Fehlertext.</returns>
-    public static string? Enable() => RunElevated(
-        $"Set-Service -Name {ServiceName} -StartupType Automatic; " +
-        $"Start-Service -Name {ServiceName}");
+    public static OperationResult Enable()
+    {
+        var error = RunElevated(
+            $"Set-Service -Name {ServiceName} -StartupType Automatic; " +
+            $"Start-Service -Name {ServiceName}");
+        if (!error.Success) return error;
+        var status = GetStatus();
+        return status.State != BaseCampState.Running
+            ? OperationResult.Fail(OperationErrorCode.BaseCampServiceNotRunning)
+            : OperationResult.Ok();
+    }
 
-    private static string? RunElevated(string script)
+    private static OperationResult RunElevated(string script)
     {
         try
         {
@@ -84,16 +82,22 @@ public static class BaseCampManager
                 WindowStyle = ProcessWindowStyle.Hidden
             };
             using var process = Process.Start(psi);
-            process?.WaitForExit(15000);
-            return null;
+            if (process is null)
+                return OperationResult.Fail(OperationErrorCode.AdminProcessNotStarted);
+            if (!process.WaitForExit(15000))
+                return OperationResult.Fail(OperationErrorCode.AdminProcessTimeout);
+            return process.ExitCode == 0
+                ? OperationResult.Ok()
+                : OperationResult.Fail(OperationErrorCode.AdminProcessExitCode,
+                    parameters: new[] { process.ExitCode.ToString() });
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
         {
-            return "Abgebrochen (Adminrechte wurden nicht erteilt).";
+            return OperationResult.Fail(OperationErrorCode.AdminRightsDenied);
         }
         catch (Exception ex)
         {
-            return ex.Message;
+            return OperationResult.Fail(OperationErrorCode.Unknown, ex.Message);
         }
     }
 }

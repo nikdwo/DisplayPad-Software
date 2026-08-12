@@ -130,10 +130,10 @@ public partial class KeyViewModel : ObservableObject
         }
     }
 
-    public void EnsureFolderPage()
+    public void EnsureFolderPage(string name)
     {
         if (FolderPage is not null) return;
-        var page = new PageConfig { Name = $"Ordner {KeyNumber}" };
+        var page = new PageConfig { Name = name };
         page.EnsureKeys();
         FolderPage = new PageViewModel(page);
     }
@@ -162,7 +162,7 @@ public partial class KeyViewModel : ObservableObject
             NvidiaFunction = string.IsNullOrWhiteSpace(NvidiaFunction) ? null : NvidiaFunction
         },
         FolderPage = ActionType == KeyActionType.Folder
-            ? (FolderPage?.ToModel() ?? new PageConfig { Name = "Ordner" })
+            ? FolderPage?.ToModel()
             : null
     };
 }

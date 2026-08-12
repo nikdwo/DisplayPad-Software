@@ -9,8 +9,17 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        var config = ConfigStore.Load();
-        Loc.Switch(config.Language);
-        new MainWindow().Show();
+        try
+        {
+            var config = ConfigStore.Load(new HostConfigNameProvider());
+            Loc.Switch(config.Language);
+            new MainWindow(config).Show();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(OperationText.Format(OperationText.FromException(ex)), Loc.Get("HostStartFailedTitle"),
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(1);
+        }
     }
 }

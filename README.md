@@ -1,10 +1,10 @@
 # DisplayPad Remote
 
-Steuert per **Mountain DisplayPad** Programme auf dem **Hauptrechner und/oder einem zweiten Windows-Rechner**: Hotkeys senden und Befehle/Skripte ausführen — pro Taste wählbar. Mehrere **Seiten** (je 12 Tasten) lassen sich per Tastendruck am Pad durchschalten. Basiert auf dem offiziellen [Mountain DisplayPad SDK](https://github.com/Mountain-BC/DisplayPad.SDK.Demo).
+Steuert per **Mountain DisplayPad** Programme auf dem **Hauptrechner und/oder einem zweiten Windows-Rechner**: Hotkeys senden und Befehle/Skripte ausführen — pro Taste wählbar. Mehrere **Seiten** (je 12 Tasten) lassen sich per Tastendruck am Pad durchschalten. Die Remote-Verbindung ist ausschließlich per HTTPS mit Token und manuell geprüftem SHA-256-Zertifikatfingerabdruck möglich. Basiert auf dem offiziellen [Mountain DisplayPad SDK](https://github.com/Mountain-BC/DisplayPad.SDK.Demo).
 
 ```
 Rechner A (DisplayPad)                        Rechner B (wird gesteuert)
-┌────────────────────────────┐   HTTP + Token ┌──────────────────────────┐
+┌────────────────────────────┐ HTTPS + Token  ┌──────────────────────────┐
 │ DisplayPad.Host (WPF-GUI)  │ ─────────────► │ DisplayPad.Agent (Tray)  │
 └────────────────────────────┘   Port 5599    └──────────────────────────┘
 ```
@@ -15,7 +15,7 @@ Voraussetzung (nur auf dem Entwicklungsrechner): .NET 8 SDK oder neuer.
 
 **Für die Weitergabe an andere Rechner:** `publish.cmd` ausführen — erzeugt self-contained Einzeldateien, die die .NET-Runtime mitbringen. Auf dem Zielrechner muss **kein** .NET installiert sein (behebt den Fehler „You must install .NET Desktop Runtime"):
 
-- Agent für den Zweitrechner: `publish\Agent\DisplayPad.Agent.exe` (nur diese eine Datei rüberkopieren; `agent.json` und `agent.log` entstehen daneben beim ersten Start)
+- Agent für den Zweitrechner: `publish\Agent\DisplayPad.Agent.exe` (nur diese eine Datei rüberkopieren; Konfiguration, Zertifikat und rotierende Logs entstehen unter `%LocalAppData%\DisplayPadRemote\Agent`)
 - Host: `publish\Host\DisplayPad.Host.exe`
 
 Für die lokale Entwicklung reicht `dotnet build DisplayPadRemote.sln` (Ausgabe unter `src\...\bin\...`, benötigt installierte .NET-Runtime).
@@ -23,16 +23,16 @@ Für die lokale Entwicklung reicht `dotnet build DisplayPadRemote.sln` (Ausgabe 
 ## Einrichtung
 
 **Auf Rechner B (Zweitrechner):**
-1. `DisplayPad.Agent.exe` starten → läuft als Tray-Icon, erzeugt beim ersten Start ein Token in `agent.json`.
-2. Tray-Icon → „Token in Zwischenablage kopieren".
-3. Eingehende Firewall-Regel für Port 5599 (TCP) anlegen:
-   `netsh advfirewall firewall add rule name="DisplayPad Agent" dir=in action=allow protocol=TCP localport=5599`
+1. `DisplayPad.Agent.exe` starten → der Agent erzeugt beim ersten Start Token und selbstsigniertes HTTPS-Zertifikat.
+2. Tray-Icon → **„Verbindungsdaten kopieren"**. Die Zwischenablage enthält Adresse, Token und SHA-256-Fingerabdruck.
+3. Eingehende Firewall-Regel nur für das private Netzwerkprofil anlegen:
+   `netsh advfirewall firewall add rule name="DisplayPad Agent" dir=in action=allow protocol=TCP localport=5599 profile=private`
 4. Optional: Verknüpfung in `shell:startup` legen, damit der Agent mit Windows startet.
 
 **Auf Rechner A (DisplayPad angeschlossen):**
 1. Base Camp beenden (kann sonst mit dem SDK um das Gerät konkurrieren).
 2. `DisplayPad.Host.exe` starten.
-3. Oben auf **„Remote"** klicken und IP des Zweitrechners, Port 5599 und das Token eintragen → Punkt wird grün, wenn der Agent erreichbar ist.
+3. Oben auf **„Remote"** klicken und IP/Name, Port 5599, Token und den vollständigen SHA-256-Fingerabdruck eintragen. Der Host akzeptiert das Zertifikat nur bei exakter Übereinstimmung.
 4. Taste im Raster anklicken → Beschriftung, Icon und Aktion festlegen:
    - **Hotkey:** ins Eingabefeld klicken und die Kombination drücken (z.B. `Ctrl+Alt+F1`). Medien-Tasten wie `MediaPlayPause`, `VolumeUp` können auch von Hand eingetragen werden.
    - **Befehl:** wird via `cmd /c` ausgeführt, z.B. `start "" "C:\Program Files\obs-studio\bin\64bit\obs64.exe"`.
@@ -42,7 +42,7 @@ Für die lokale Entwicklung reicht `dotnet build DisplayPadRemote.sln` (Ausgabe 
 6. „Aktion jetzt testen" führt die Aktion des ausgewählten Eintrags sofort aus.
 7. „Speichern" schreibt die Konfiguration, „Auf Gerät übertragen" rendert Icons + Beschriftungen der aktiven Seite und lädt sie auf die Pad-Tasten (alle 12, leere Tasten werden schwarz).
 
-Konfiguration: `%AppData%\DisplayPadRemote\config.json`
+Host-Konfiguration: `%AppData%\DisplayPadRemote\config.json`. Agent-Konfiguration, Zertifikat und Logs: `%LocalAppData%\DisplayPadRemote\Agent`. Agent-Token und OBS-Passwort werden mit Windows DPAPI für den aktuellen Benutzer geschützt gespeichert.
 
 ## Feintuning (config.json)
 
@@ -75,4 +75,16 @@ Manuell per PowerShell (Admin): `Stop-Service BaseCampService; Set-Service BaseC
 ## Einschränkungen
 
 - Hotkeys landen auf Rechner B in der aktiven Sitzung; Secure Desktop (UAC-Prompt, Sperrbildschirm) ist von Windows aus prinzipbedingt nicht erreichbar.
-- Der Agent führt beliebige Befehle aus — Token geheim halten und nur im eigenen LAN betreiben.
+- Der Agent führt bewusst beliebige Befehle aus — Token geheim halten, Fingerabdruck prüfen und nur im eigenen privaten LAN betreiben.
+
+## Sicherheit, Rotation und Wiederherstellung
+
+- Der Agent akzeptiert remote ausschließlich `Hotkey` und `Command`, maximal 64 KiB pro Anfrage. Fehlanmeldungen werden pro Quelladresse begrenzt; Tokens, Passwörter und vollständige Befehle werden nicht protokolliert.
+- **Token rotieren:** Agent-Tray → „Token rotieren". Anschließend das kopierte neue Token im Host speichern. Das alte Token ist sofort ungültig.
+- **Zertifikatswechsel:** Ändert sich der im Tray kopierte Fingerabdruck unerwartet, nicht einfach übernehmen. Zuerst auf dem Agent-Rechner prüfen, warum `agent.pfx` ersetzt wurde.
+- Die Host-Konfiguration wird atomar gespeichert. Beim Überschreiben entsteht `config.json.bak`; eine beschädigte Hauptdatei wird sichtbar aus dieser Sicherung wiederhergestellt. Sind Hauptdatei und Sicherung ungültig, startet der Host mit einer sichtbaren Fehlermeldung.
+- Eine beschädigte Agent-Konfiguration führt zu einem sichtbaren Startfehler und erzeugt bewusst kein neues Token.
+
+## Tests und Release
+
+`dotnet test DisplayPadRemote.sln -c Release` führt Shared-, Host- und Agent-Tests aus. Die Windows-CI prüft zusätzlich Release-Build, Lokalisierung, bekannte NuGet-Schwachstellen und beide self-contained Publish-Ausgaben. Die manuellen Release-Gates und Hardwarematrix stehen in [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md); langfristige Vorhaben in [`docs/BACKLOG.md`](docs/BACKLOG.md).

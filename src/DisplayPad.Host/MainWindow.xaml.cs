@@ -16,20 +16,29 @@ public partial class MainWindow : Window
     private MainViewModel ViewModel => (MainViewModel)DataContext;
 
     private readonly WinForms.NotifyIcon _trayIcon;
+    private readonly WinForms.ToolStripMenuItem _showItem;
+    private readonly WinForms.ToolStripMenuItem _hideItem;
+    private readonly WinForms.ToolStripMenuItem _configItem;
+    private readonly WinForms.ToolStripMenuItem _exitItem;
     private bool _trayHintShown;
+    private bool _isExiting;
 
-    public MainWindow()
+    public MainWindow(AppConfig config)
     {
         InitializeComponent();
-        DataContext = new MainViewModel();
+        DataContext = new MainViewModel(config);
 
         var menu = new WinForms.ContextMenuStrip();
-        menu.Items.Add("Anzeigen", null, (_, _) => ShowFromTray());
-        menu.Items.Add("Minimieren in den Tray", null, (_, _) => HideToTray());
+        _showItem = new WinForms.ToolStripMenuItem(Loc.Get("TrayShow"), null, (_, _) => ShowFromTray());
+        _hideItem = new WinForms.ToolStripMenuItem(Loc.Get("TrayHide"), null, (_, _) => HideToTray());
+        _configItem = new WinForms.ToolStripMenuItem(Loc.Get("TrayConfig"), null, (_, _) => OpenConfigFolder());
+        _exitItem = new WinForms.ToolStripMenuItem(Loc.Get("TrayExit"), null, (_, _) => ExitApplication());
+        menu.Items.Add(_showItem);
+        menu.Items.Add(_hideItem);
         menu.Items.Add(new WinForms.ToolStripSeparator());
-        menu.Items.Add("Einstellungen (Konfigurationsordner)", null, (_, _) => OpenConfigFolder());
+        menu.Items.Add(_configItem);
         menu.Items.Add(new WinForms.ToolStripSeparator());
-        menu.Items.Add("Beenden", null, (_, _) => ExitApplication());
+        menu.Items.Add(_exitItem);
 
         _trayIcon = new WinForms.NotifyIcon
         {
@@ -43,6 +52,15 @@ public partial class MainWindow : Window
             if (IsVisible) HideToTray();
             else ShowFromTray();
         };
+        Loc.LanguageChanged += UpdateProgrammaticTexts;
+    }
+
+    private void UpdateProgrammaticTexts()
+    {
+        _showItem.Text = Loc.Get("TrayShow");
+        _hideItem.Text = Loc.Get("TrayHide");
+        _configItem.Text = Loc.Get("TrayConfig");
+        _exitItem.Text = Loc.Get("TrayExit");
     }
 
     private void ShowFromTray()
@@ -59,7 +77,7 @@ public partial class MainWindow : Window
         {
             _trayHintShown = true;
             _trayIcon.ShowBalloonTip(2500, "DisplayPad Remote",
-                "Läuft im Hintergrund weiter – das Pad bleibt aktiv. Beenden über das Tray-Menü.",
+                Loc.Get("TrayHint"),
                 WinForms.ToolTipIcon.Info);
         }
     }
@@ -72,13 +90,21 @@ public partial class MainWindow : Window
 
     private void ExitApplication()
     {
+        _isExiting = true;
+        Loc.LanguageChanged -= UpdateProgrammaticTexts;
+        ViewModel.Dispose();
         _trayIcon.Visible = false;
         _trayIcon.Dispose();
-        Environment.Exit(0);
+        Application.Current.Shutdown();
     }
 
     protected override void OnClosing(CancelEventArgs e)
     {
+        if (_isExiting)
+        {
+            base.OnClosing(e);
+            return;
+        }
         // X minimiert in den Tray, damit das Pad weiterläuft; echtes Beenden nur über das Tray-Menü
         e.Cancel = true;
         HideToTray();

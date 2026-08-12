@@ -5,19 +5,25 @@ namespace DisplayPad.Shared.Models;
 
 /// <summary>Fällt bei unbekannten/veralteten Enum-Strings (z.B. aus einer config.json eines anderen Branches/einer älteren Version)
 /// auf default(T) zurück statt beim Laden zu crashen.</summary>
-public class LenientEnumConverter<T> : JsonConverter<T> where T : struct, Enum
+public sealed class StrictEnumConverter<T> : JsonConverter<T> where T : struct, Enum
 {
     public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
+        if (reader.TokenType != JsonTokenType.String)
+            throw new JsonException($"{typeof(T).Name} muss als Text angegeben werden.");
+
         var value = reader.GetString();
-        return value != null && Enum.TryParse<T>(value, ignoreCase: true, out var result) ? result : default;
+        if (value is null || !Enum.TryParse<T>(value, ignoreCase: false, out var result) ||
+            !Enum.IsDefined(result))
+            throw new JsonException($"Unbekannter Wert '{value}' für {typeof(T).Name}.");
+        return result;
     }
 
     public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
         => writer.WriteStringValue(value.ToString());
 }
 
-[JsonConverter(typeof(LenientEnumConverter<KeyActionType>))]
+[JsonConverter(typeof(StrictEnumConverter<KeyActionType>))]
 public enum KeyActionType
 {
     None,
@@ -29,7 +35,7 @@ public enum KeyActionType
     Folder
 }
 
-[JsonConverter(typeof(LenientEnumConverter<ObsCommand>))]
+[JsonConverter(typeof(StrictEnumConverter<ObsCommand>))]
 public enum ObsCommand
 {
     SetScene,
@@ -63,7 +69,7 @@ public enum ObsCommand
     ToggleSourceFilter
 }
 
-[JsonConverter(typeof(LenientEnumConverter<PageSwitchMode>))]
+[JsonConverter(typeof(StrictEnumConverter<PageSwitchMode>))]
 public enum PageSwitchMode
 {
     Next,

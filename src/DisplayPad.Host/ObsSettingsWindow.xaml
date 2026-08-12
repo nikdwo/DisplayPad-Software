@@ -1,7 +1,7 @@
 <Window x:Class="DisplayPad.Host.ObsSettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="OBS WebSocket" Width="420" SizeToContent="Height"
+        Title="{DynamicResource DlgObsTitle}" Width="420" SizeToContent="Height"
         Background="#141414" Foreground="#EBEBEB"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False">
     <Window.Resources>

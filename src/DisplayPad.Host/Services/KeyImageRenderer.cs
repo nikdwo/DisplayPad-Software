@@ -20,7 +20,7 @@ public static class KeyImageRenderer
     public static string Render(KeyConfig key)
     {
         Directory.CreateDirectory(RenderDirectory);
-        string outputPath = Path.Combine(RenderDirectory, $"key{key.KeyIndex}.png");
+        string outputPath = Path.Combine(RenderDirectory, $"{Guid.NewGuid():N}-key{key.KeyIndex}.png");
 
         using var bmp = Draw(key);
         bmp.Save(outputPath, ImageFormat.Png);
@@ -36,17 +36,17 @@ public static class KeyImageRenderer
         return ms.ToArray();
     }
 
-    public static string RenderBackButton()
+    public static string RenderBackButton(string label)
     {
         Directory.CreateDirectory(RenderDirectory);
         int keyIndex = AppConfig.KeyCount - 1;
-        string outputPath = Path.Combine(RenderDirectory, $"key{keyIndex}.png");
-        using var bmp = DrawBackButton();
+        string outputPath = Path.Combine(RenderDirectory, $"{Guid.NewGuid():N}-key{keyIndex}.png");
+        using var bmp = DrawBackButton(label);
         bmp.Save(outputPath, ImageFormat.Png);
         return outputPath;
     }
 
-    private static Bitmap DrawBackButton()
+    private static Bitmap DrawBackButton(string label)
     {
         var bmp = new Bitmap(Size, Size);
         using var g = Graphics.FromImage(bmp);
@@ -72,8 +72,8 @@ public static class KeyImageRenderer
         var textArea = new RectangleF(2, 4, Size - 4, Size - 8);
         var shadowArea = textArea;
         shadowArea.Offset(1, 1);
-        g.DrawString("Zurück", font, Brushes.Black, shadowArea, format);
-        g.DrawString("Zurück", font, Brushes.White, textArea, format);
+        g.DrawString(label, font, Brushes.Black, shadowArea, format);
+        g.DrawString(label, font, Brushes.White, textArea, format);
         return bmp;
     }
 
