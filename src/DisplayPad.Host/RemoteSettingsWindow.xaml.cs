@@ -15,6 +15,7 @@ public partial class RemoteSettingsWindow : Window
         HostBox.Text = viewModel.AgentHost;
         PortBox.Text = viewModel.AgentPort.ToString();
         TokenBox.Text = viewModel.AgentToken;
+        FingerprintBox.Text = viewModel.AgentCertificateFingerprint;
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)
@@ -28,6 +29,7 @@ public partial class RemoteSettingsWindow : Window
         _viewModel.AgentHost = HostBox.Text.Trim();
         _viewModel.AgentPort = port;
         _viewModel.AgentToken = TokenBox.Text.Trim();
+        _viewModel.AgentCertificateFingerprint = FingerprintBox.Text.Trim();
         _viewModel.SaveCommand.Execute(null);
         DialogResult = true;
     }

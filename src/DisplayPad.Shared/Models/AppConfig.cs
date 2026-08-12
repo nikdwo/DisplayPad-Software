@@ -9,6 +9,7 @@ public class PageConfig
 
     public void EnsureKeys()
     {
+        Keys ??= new List<KeyConfig>();
         for (int i = 0; i < AppConfig.KeyCount; i++)
         {
             if (!Keys.Any(k => k.KeyIndex == i))
@@ -27,6 +28,7 @@ public class ProfileConfig
 
     public void EnsurePages()
     {
+        Pages ??= new List<PageConfig>();
         if (Pages.Count == 0)
             Pages.Add(new PageConfig { Name = "Seite 1" });
         foreach (var page in Pages)
@@ -36,15 +38,26 @@ public class ProfileConfig
 
 public class AppConfig
 {
+    public const int CurrentConfigVersion = 2;
     public const int KeyCount = 12;
+    public const int FolderBackKeyIndex = KeyCount - 1;
+
+    public int ConfigVersion { get; set; } = CurrentConfigVersion;
 
     public string AgentHost { get; set; } = "127.0.0.1";
     public int AgentPort { get; set; } = 5599;
     public string AgentToken { get; set; } = "";
+    public string AgentCertificateFingerprint { get; set; } = "";
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AgentTokenProtected { get; set; }
 
     public string ObsHost { get; set; } = "127.0.0.1";
     public int ObsPort { get; set; } = 4455;
     public string ObsPassword { get; set; } = "";
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ObsPasswordProtected { get; set; }
 
     /// <summary>
     /// Mapping vom SDK-KeyMatrix-Wert auf den 0-basierten Tastenindex.
@@ -79,6 +92,7 @@ public class AppConfig
 
     public void EnsureProfiles()
     {
+        Profiles ??= new List<ProfileConfig>();
         // Stufe 1: sehr alte config (Keys-Liste) → erste Seite in Pages
         if (Keys is { Count: > 0 })
         {
@@ -101,6 +115,11 @@ public class AppConfig
             ActiveProfileIndex = 0;
 
         foreach (var profile in Profiles)
+        {
+            profile.Pages ??= new List<PageConfig>();
             profile.EnsurePages();
+        }
+
+        ConfigVersion = CurrentConfigVersion;
     }
 }

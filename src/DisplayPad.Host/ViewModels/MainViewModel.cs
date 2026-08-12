@@ -12,15 +12,17 @@ using Microsoft.Win32;
 
 namespace DisplayPad.Host.ViewModels;
 
-public partial class MainViewModel : ObservableObject
+public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly AppConfig _config;
     private readonly DeviceService _device;
+    private readonly DeviceUploadCoordinator _uploadCoordinator;
     private readonly ActionDispatcher _dispatcher;
     private readonly ObsService _obsService = new();
     private readonly DispatcherTimer _pingTimer;
     private bool _initialized;
-    private bool _uploadInProgress;
+    private bool _statusRefreshInProgress;
+    private bool _disposed;
     private PageViewModel? _runtimePage;
     private readonly Stack<PageViewModel> _pageHistory = new();
     private readonly Stack<(PageViewModel parentPage, KeyViewModel folderKey)> _editorStack = new();
@@ -56,7 +58,7 @@ public partial class MainViewModel : ObservableObject
     public bool InFolderEditor => _editorStack.Count > 0;
 
     public string EditorBreadcrumb => _editorStack.Count == 0 ? ""
-        : $"{ActivePage?.Name} › Ordner (Taste {_editorStack.Peek().folderKey.KeyNumber})";
+        : string.Format(Loc.Get("FmtEditorBreadcrumb"), ActivePage?.Name, _editorStack.Peek().folderKey.KeyNumber);
 
     [ObservableProperty]
     private string _agentHost;
@@ -66,6 +68,9 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _agentToken;
+
+    [ObservableProperty]
+    private string _agentCertificateFingerprint;
 
     [ObservableProperty]
     private bool _agentOnline;
@@ -128,7 +133,7 @@ public partial class MainViewModel : ObservableObject
             using var key = Registry.CurrentUser.OpenSubKey(AutostartRegistryKey, writable: true);
             if (key is null) return;
             if (value)
-                key.SetValue(AutostartValueName, Environment.ProcessPath ?? "");
+                key.SetValue(AutostartValueName, $"\"{Environment.ProcessPath ?? ""}\"");
             else
                 key.DeleteValue(AutostartValueName, throwOnMissingValue: false);
             OnPropertyChanged();
@@ -144,6 +149,7 @@ public partial class MainViewModel : ObservableObject
         _agentHost = _config.AgentHost;
         _agentPort = _config.AgentPort;
         _agentToken = _config.AgentToken;
+        _agentCertificateFingerprint = _config.AgentCertificateFingerprint;
         ObsHost = _config.ObsHost;
         ObsPort = _config.ObsPort;
         ObsPassword = _config.ObsPassword;
@@ -161,9 +167,10 @@ public partial class MainViewModel : ObservableObject
         EditorPage = ActivePage;
 
         _dispatcher = new ActionDispatcher();
-        _dispatcher.Configure(_agentHost, _agentPort, _agentToken);
+        _dispatcher.Configure(_agentHost, _agentPort, _agentToken, _agentCertificateFingerprint);
 
         _device = new DeviceService(_config.KeyMatrixMap);
+        _uploadCoordinator = new DeviceUploadCoordinator(_device);
         _device.PlugChanged += connected => RunOnUi(() =>
         {
             DeviceConnected = connected;
@@ -194,9 +201,15 @@ public partial class MainViewModel : ObservableObject
         _pingTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         _pingTimer.Tick += async (_, _) =>
         {
-            await RefreshAgentStatusAsync();
-            RefreshBaseCampStatus();
-            await RefreshObsStatusAsync();
+            if (_statusRefreshInProgress) return;
+            _statusRefreshInProgress = true;
+            try
+            {
+                await RefreshAgentStatusAsync();
+                RefreshBaseCampStatus();
+                await RefreshObsStatusAsync();
+            }
+            finally { _statusRefreshInProgress = false; }
         };
         _pingTimer.Start();
         _ = RefreshAgentStatusAsync();
@@ -204,6 +217,8 @@ public partial class MainViewModel : ObservableObject
         _ = RefreshObsStatusAsync();
 
         _initialized = true;
+        if (!string.IsNullOrWhiteSpace(ConfigStore.LastLoadWarning))
+            StatusMessage = ConfigStore.LastLoadWarning;
     }
 
     private void TakeControlIfConfigured()
@@ -224,7 +239,13 @@ public partial class MainViewModel : ObservableObject
     {
         Loc.Switch(value);
         _config.Language = value;
-        ConfigStore.Save(_config);
+        try { ConfigStore.Save(_config); }
+        catch (Exception ex) { StatusMessage = string.Format(Loc.Get("MsgOperationFailed"), ex.Message); }
+        OnPropertyChanged(nameof(EditorBreadcrumb));
+        DeviceStatusText = DeviceConnected ? Loc.Get("MsgDeviceConnected") : Loc.Get("MsgDeviceDisconnected");
+        _ = RefreshAgentStatusAsync();
+        RefreshBaseCampStatus();
+        _ = RefreshObsStatusAsync();
     }
 
     [RelayCommand]
@@ -284,10 +305,24 @@ public partial class MainViewModel : ObservableObject
     private void RefreshBaseCampStatus()
     {
         var status = BaseCampManager.GetStatus();
-        BaseCampStatusText = status.Description;
+        BaseCampStatusText = status.State switch
+        {
+            BaseCampState.NotInstalled => Loc.Get("MsgBaseCampNotInstalled"),
+            BaseCampState.Running => string.Format(Loc.Get("MsgBaseCampRunning"), LocalizeStartType(status.StartType)),
+            _ when status.StartType == "Disabled" => Loc.Get("MsgBaseCampDisabled"),
+            _ => string.Format(Loc.Get("MsgBaseCampStopped"), LocalizeStartType(status.StartType))
+        };
         BaseCampConflict = status.IsConflict;
         BaseCampInstalled = status.State != BaseCampState.NotInstalled;
     }
+
+    private static string LocalizeStartType(string startType) => startType switch
+    {
+        "Automatic" => Loc.Get("StartTypeAutomatic"),
+        "Manual" => Loc.Get("StartTypeManual"),
+        "Disabled" => Loc.Get("StartTypeDisabled"),
+        _ => startType
+    };
 
     private async Task RefreshObsStatusAsync()
     {
@@ -336,7 +371,6 @@ public partial class MainViewModel : ObservableObject
 
         _pageHistory.Clear();
         _editorStack.Clear();
-        _runtimePage = value;
         EditorPage = value;
         OnPropertyChanged(nameof(InFolderEditor));
         OnPropertyChanged(nameof(EditorBreadcrumb));
@@ -346,15 +380,19 @@ public partial class MainViewModel : ObservableObject
 
     private async void OnPadKeyPressed(int index)
     {
-        if (LearnModeActive)
+        if (LearnModeActive || _uploadCoordinator.IsUploading || _uploadCoordinator.IsBlocked)
             return;
 
         if (_pageHistory.Count > 0 && index == AppConfig.KeyCount - 1)
         {
-            _runtimePage = _pageHistory.Pop();
-            bool stillInFolder = _pageHistory.Count > 0;
-            if (DeviceConnected) _ = UploadPageToDeviceAsync(_runtimePage, silent: true, renderBackButton: stillInFolder);
-            StatusMessage = Loc.Get("MsgFolderExited");
+            var targetPage = _pageHistory.Peek();
+            bool stillInFolder = _pageHistory.Count > 1;
+            if (!DeviceConnected || await UploadPageToDeviceAsync(targetPage, silent: true, renderBackButton: stillInFolder))
+            {
+                _pageHistory.Pop();
+                _runtimePage = targetPage;
+                StatusMessage = Loc.Get("MsgFolderExited");
+            }
             return;
         }
 
@@ -375,7 +413,7 @@ public partial class MainViewModel : ObservableObject
 
         if (key.ActionType == KeyActionType.Folder)
         {
-            OpenFolderOnDevice(key);
+            await OpenFolderOnDeviceAsync(key);
             return;
         }
 
@@ -456,7 +494,7 @@ public partial class MainViewModel : ObservableObject
 
     private async Task RefreshAgentStatusAsync()
     {
-        _dispatcher.Configure(AgentHost, AgentPort, AgentToken);
+        _dispatcher.Configure(AgentHost, AgentPort, AgentToken, AgentCertificateFingerprint);
         var ping = await _dispatcher.PingAsync();
         AgentOnline = ping is not null;
         AgentStatusText = ping is not null
@@ -467,17 +505,26 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void Save()
     {
-        _config.AgentHost = AgentHost;
-        _config.AgentPort = AgentPort;
-        _config.AgentToken = AgentToken;
-        _config.ObsHost = ObsHost;
-        _config.ObsPort = ObsPort;
-        _config.ObsPassword = ObsPassword;
-        _config.Profiles = Profiles.Select(p => p.ToModel()).ToList();
-        ConfigStore.Save(_config);
-        _dispatcher.Configure(AgentHost, AgentPort, AgentToken);
-        _obsService.Configure(ObsHost, ObsPort, ObsPassword);
-        StatusMessage = Loc.Get("MsgSaved");
+        try
+        {
+            _config.AgentHost = AgentHost;
+            _config.AgentPort = AgentPort;
+            _config.AgentToken = AgentToken;
+            _config.AgentCertificateFingerprint = AgentCertificateFingerprint;
+            _config.ObsHost = ObsHost;
+            _config.ObsPort = ObsPort;
+            _config.ObsPassword = ObsPassword;
+            _config.Profiles = Profiles.Select(p => p.ToModel()).ToList();
+            _config.ActiveProfileIndex = Math.Max(0, Profiles.IndexOf(ActiveProfile!));
+            ConfigStore.Save(_config);
+            _dispatcher.Configure(AgentHost, AgentPort, AgentToken, AgentCertificateFingerprint);
+            _obsService.Configure(ObsHost, ObsPort, ObsPassword);
+            StatusMessage = Loc.Get("MsgSaved");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = string.Format(Loc.Get("MsgOperationFailed"), ex.Message);
+        }
     }
 
     // ── Profile commands ──────────────────────────────────────────────────────
@@ -551,8 +598,12 @@ public partial class MainViewModel : ObservableObject
         if (dlg.ShowDialog() != true)
             return;
 
-        File.WriteAllText(dlg.FileName, JsonSerializer.Serialize(ActiveProfile.ToModel(), _jsonOptions));
-        StatusMessage = Loc.Get("MsgProfileExported");
+        try
+        {
+            File.WriteAllText(dlg.FileName, JsonSerializer.Serialize(ActiveProfile.ToModel(), _jsonOptions));
+            StatusMessage = Loc.Get("MsgProfileExported");
+        }
+        catch (Exception ex) { StatusMessage = string.Format(Loc.Get("MsgOperationFailed"), ex.Message); }
     }
 
     [RelayCommand]
@@ -568,6 +619,8 @@ public partial class MainViewModel : ObservableObject
         ProfileConfig? model;
         try
         {
+            if (new FileInfo(dlg.FileName).Length > ConfigRepository.MaximumJsonBytes)
+                throw new ConfigValidationException("Die Importdatei überschreitet 5 MiB.");
             model = JsonSerializer.Deserialize<ProfileConfig>(File.ReadAllText(dlg.FileName), _jsonReadOptions);
         }
         catch
@@ -582,7 +635,18 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        model.EnsurePages();
+        try
+        {
+            model.EnsurePages();
+            var validationConfig = new AppConfig { Profiles = new List<ProfileConfig> { model } };
+            validationConfig.EnsureProfiles();
+            ConfigValidator.Validate(validationConfig);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = string.Format(Loc.Get("MsgOperationFailed"), ex.Message);
+            return;
+        }
         var vm = new ProfileViewModel(model);
         Profiles.Add(vm);
         ActiveProfile = vm;
@@ -635,8 +699,12 @@ public partial class MainViewModel : ObservableObject
         if (dlg.ShowDialog() != true)
             return;
 
-        File.WriteAllText(dlg.FileName, JsonSerializer.Serialize(ActivePage.ToModel(), _jsonOptions));
-        StatusMessage = Loc.Get("MsgPageExported");
+        try
+        {
+            File.WriteAllText(dlg.FileName, JsonSerializer.Serialize(ActivePage.ToModel(), _jsonOptions));
+            StatusMessage = Loc.Get("MsgPageExported");
+        }
+        catch (Exception ex) { StatusMessage = string.Format(Loc.Get("MsgOperationFailed"), ex.Message); }
     }
 
     [RelayCommand]
@@ -655,6 +723,8 @@ public partial class MainViewModel : ObservableObject
         PageConfig? model;
         try
         {
+            if (new FileInfo(dlg.FileName).Length > ConfigRepository.MaximumJsonBytes)
+                throw new ConfigValidationException("Die Importdatei überschreitet 5 MiB.");
             model = JsonSerializer.Deserialize<PageConfig>(File.ReadAllText(dlg.FileName), _jsonReadOptions);
         }
         catch
@@ -669,7 +739,24 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        model.EnsureKeys();
+        try
+        {
+            model.EnsureKeys();
+            var validationConfig = new AppConfig
+            {
+                Profiles = new List<ProfileConfig>
+                {
+                    new() { Pages = new List<PageConfig> { model } }
+                }
+            };
+            validationConfig.EnsureProfiles();
+            ConfigValidator.Validate(validationConfig);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = string.Format(Loc.Get("MsgOperationFailed"), ex.Message);
+            return;
+        }
         var vm = new PageViewModel(model);
         ActiveProfile.Pages.Add(vm);
         ActivePage = vm;
@@ -687,54 +774,43 @@ public partial class MainViewModel : ObservableObject
         await UploadActivePageAsync(silent: false);
     }
 
-    private Task UploadActivePageAsync(bool silent) =>
+    private Task<bool> UploadActivePageAsync(bool silent) =>
         UploadPageToDeviceAsync(_runtimePage ?? ActivePage, silent, _pageHistory.Count > 0);
 
-    private async Task UploadPageToDeviceAsync(PageViewModel? page, bool silent, bool renderBackButton = false)
+    private async Task<bool> UploadPageToDeviceAsync(PageViewModel? page, bool silent, bool renderBackButton = false)
     {
-        if (_uploadInProgress || page is null)
-            return;
+        if (page is null)
+            return false;
 
         if (!_device.TryFindDevice())
         {
             if (!silent)
                 StatusMessage = Loc.Get("MsgNoDeviceUpload");
-            return;
+            return false;
         }
 
-        _uploadInProgress = true;
-        try
+        if (!silent) StatusMessage = Loc.Get("MsgUploading");
+        var result = await _uploadCoordinator.UploadLatestAsync(page.ToModel(), renderBackButton,
+            _config.UploadButtonIndexBase, Loc.Get("LabelBack"));
+        if (result.Success)
         {
-            if (!silent)
-                StatusMessage = Loc.Get("MsgUploading");
-
-            int uploaded = 0;
-            foreach (var key in page.Keys.ToList())
-            {
-                var model = key.ToModel();
-                bool ok = await Task.Run(() =>
-                {
-                    string path = KeyImageRenderer.Render(model);
-                    return _device.UploadKeyImage(model.KeyIndex, path, _config.UploadButtonIndexBase);
-                });
-                if (ok) uploaded++;
-            }
-
-            if (renderBackButton)
-            {
-                await Task.Run(() =>
-                {
-                    string backPath = KeyImageRenderer.RenderBackButton();
-                    _device.UploadKeyImage(AppConfig.KeyCount - 1, backPath, _config.UploadButtonIndexBase);
-                });
-            }
-
-            StatusMessage = string.Format(Loc.Get("MsgUploadDone"), page.Name, uploaded);
+            _runtimePage = page;
+            StatusMessage = string.Format(Loc.Get("MsgUploadDone"), page.Name, result.UploadedKeys);
         }
-        finally
+        else if (result.Error != DeviceUploadError.Superseded)
         {
-            _uploadInProgress = false;
+            StatusMessage = result.Error switch
+            {
+                DeviceUploadError.Blocked => Loc.Get("MsgUploadBlocked"),
+                DeviceUploadError.DeviceNotFound => Loc.Get("MsgNoDeviceUpload"),
+                DeviceUploadError.KeyUploadFailed => string.Format(Loc.Get("MsgKeyUploadFailed"), result.FailedKey),
+                DeviceUploadError.BackUploadFailed => Loc.Get("MsgBackUploadFailed"),
+                DeviceUploadError.UploadFailedRolledBack => Loc.Get("MsgUploadRolledBack"),
+                DeviceUploadError.RollbackFailed => Loc.Get("MsgUploadRollbackFailed"),
+                _ => Loc.Get("MsgNoDeviceUpload")
+            };
         }
+        return result.Success;
     }
 
     [RelayCommand]
@@ -808,18 +884,31 @@ public partial class MainViewModel : ObservableObject
         if (SelectedKey.ActionType == KeyActionType.Folder)
             return;
 
-        _dispatcher.Configure(AgentHost, AgentPort, AgentToken);
+        _dispatcher.Configure(AgentHost, AgentPort, AgentToken, AgentCertificateFingerprint);
         await ExecuteKeyAsync(SelectedKey, "Test");
     }
 
-    private void OpenFolderOnDevice(KeyViewModel key)
+    private async Task OpenFolderOnDeviceAsync(KeyViewModel key)
     {
         key.EnsureFolderPage();
-        _pageHistory.Push(_runtimePage!);
-        _runtimePage = key.FolderPage!;
-        if (DeviceConnected)
-            _ = UploadPageToDeviceAsync(_runtimePage, silent: true, renderBackButton: true);
-        StatusMessage = string.Format(Loc.Get("MsgFolderEntered"), key.KeyNumber);
+        var targetPage = key.FolderPage!;
+        var previousPage = _runtimePage!;
+        if (!DeviceConnected || await UploadPageToDeviceAsync(targetPage, silent: true, renderBackButton: true))
+        {
+            _pageHistory.Push(previousPage);
+            _runtimePage = targetPage;
+            StatusMessage = string.Format(Loc.Get("MsgFolderEntered"), key.KeyNumber);
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _pingTimer.Stop();
+        _device.Dispose();
+        _dispatcher.Dispose();
+        _obsService.Dispose();
     }
 
     [RelayCommand]

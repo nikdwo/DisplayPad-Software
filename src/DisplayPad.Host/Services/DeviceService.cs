@@ -6,10 +6,25 @@ namespace DisplayPad.Host.Services;
 /// Kapselt das Mountain DisplayPad SDK: Geräteerkennung, Tastendrücke, Bild-Upload.
 /// Die SDK-Callbacks kommen von einem Nicht-UI-Thread — Konsumenten müssen selbst marshallen.
 /// </summary>
-public class DeviceService
+public interface IDeviceService : IDisposable
+{
+    event Action<int>? RawKeyPressed;
+    event Action<int>? KeyPressed;
+    event Action<bool>? PlugChanged;
+    int[] KeyMatrixMap { get; set; }
+    bool IsConnected { get; }
+    bool TryFindDevice();
+    bool UploadKeyImage(int keyIndex, string imagePath, int indexBase);
+    bool TakeControl();
+    bool ResetStoredMappings();
+}
+
+public sealed class DeviceService : IDeviceService
 {
     private readonly DisplayPadHelper _helper;
+    private readonly object _sdkSync = new();
     private int _deviceId;
+    private bool _disposed;
 
     /// <summary>Roher KeyMatrix-Wert bei jedem Drücken (für Diagnose/Mapping).</summary>
     public event Action<int>? RawKeyPressed;
@@ -23,7 +38,7 @@ public class DeviceService
     /// <summary>Position im Array = Tastenindex, Wert = KeyMatrix-Code des SDK.</summary>
     public int[] KeyMatrixMap { get; set; }
 
-    public bool IsConnected => _deviceId != 0 && _helper.DisplayPadIsDevicePlug(_deviceId);
+    public bool IsConnected { get { lock (_sdkSync) return _deviceId != 0 && _helper.DisplayPadIsDevicePlug(_deviceId); } }
 
     public DeviceService(int[] keyMatrixMap)
     {
@@ -64,26 +79,32 @@ public class DeviceService
     /// <summary>Sucht das Gerät, falls noch kein Plug-Event kam (SDK-Geräte-IDs beginnen bei 1).</summary>
     public bool TryFindDevice()
     {
-        if (_deviceId != 0 && _helper.DisplayPadIsDevicePlug(_deviceId))
-            return true;
-
-        for (int id = 1; id <= 8; id++)
+        lock (_sdkSync)
         {
-            if (_helper.DisplayPadIsDevicePlug(id))
-            {
-                _deviceId = id;
-                PlugChanged?.Invoke(true);
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (_deviceId != 0 && _helper.DisplayPadIsDevicePlug(_deviceId))
                 return true;
+
+            for (int id = 1; id <= 8; id++)
+            {
+                if (_helper.DisplayPadIsDevicePlug(id))
+                {
+                    _deviceId = id;
+                    PlugChanged?.Invoke(true);
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
     }
 
     public bool UploadKeyImage(int keyIndex, string imagePath, int indexBase)
     {
-        if (!TryFindDevice())
-            return false;
-        return _helper.UploadImage(_deviceId, imagePath, keyIndex + indexBase);
+        lock (_sdkSync)
+        {
+            if (!TryFindDevice()) return false;
+            return _helper.UploadImage(_deviceId, imagePath, keyIndex + indexBase);
+        }
     }
 
     /// <summary>
@@ -92,9 +113,11 @@ public class DeviceService
     /// </summary>
     public bool TakeControl()
     {
-        if (!TryFindDevice())
-            return false;
-        return _helper.DisplayPadAPEnable(true, _deviceId);
+        lock (_sdkSync)
+        {
+            if (!TryFindDevice()) return false;
+            return _helper.DisplayPadAPEnable(true, _deviceId);
+        }
     }
 
     /// <summary>
@@ -103,10 +126,23 @@ public class DeviceService
     /// </summary>
     public bool ResetStoredMappings()
     {
-        if (!TryFindDevice())
-            return false;
-        bool keysOk = _helper.DisplayPadResetKeys(_deviceId);
-        bool picsOk = _helper.DisplayPadResetPicture(_deviceId);
-        return keysOk && picsOk;
+        lock (_sdkSync)
+        {
+            if (!TryFindDevice()) return false;
+            bool keysOk = _helper.DisplayPadResetKeys(_deviceId);
+            bool picsOk = _helper.DisplayPadResetPicture(_deviceId);
+            return keysOk && picsOk;
+        }
+    }
+
+    public void Dispose()
+    {
+        lock (_sdkSync)
+        {
+            if (_disposed) return;
+            _disposed = true;
+            DisplayPadHelper.DisplayPadPlugCallBack -= OnPlug;
+            DisplayPadHelper.DisplayPadKeyCallBack -= OnKey;
+        }
     }
 }

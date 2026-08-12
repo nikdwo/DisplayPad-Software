@@ -1,4 +1,7 @@
 using System.Diagnostics;
+using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using System.Windows.Forms;
 using DisplayPad.Shared.Dto;
 using DisplayPad.Shared.Execution;
@@ -15,108 +18,242 @@ internal static class Program
     [STAThread]
     private static void Main()
     {
-        var config = AgentConfig.LoadOrCreate();
-        Log.Info($"Agent startet auf http://{config.BindAddress}:{config.Port}");
+        Application.EnableVisualStyles();
+        Application.SetHighDpiMode(HighDpiMode.SystemAware);
 
-        var builder = WebApplication.CreateBuilder();
+        WebApplication? app = null;
+        try
+        {
+            var config = AgentConfig.LoadOrCreate();
+            var agentCertificate = AgentCertificateStore.LoadOrCreate(config);
+            app = AgentWebApplication.Build(config, agentCertificate.Certificate);
+            app.StartAsync().GetAwaiter().GetResult();
+            Log.Info($"Agent gestartet: HTTPS-Port {config.Port}, Zertifikat {agentCertificate.Fingerprint}");
+            Application.Run(new TrayAppContext(config, agentCertificate.Fingerprint, app));
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Agent-Start fehlgeschlagen: {ex.Message}");
+            MessageBox.Show(ex.ToString(), "DisplayPad Agent – Start fehlgeschlagen",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            if (app is not null)
+            {
+                try
+                {
+                    using var stopTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    app.StopAsync(stopTimeout.Token).GetAwaiter().GetResult();
+                }
+                catch { }
+                app.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            }
+        }
+    }
+}
+
+public static class AgentWebApplication
+{
+    public const long MaximumBodyBytes = 64 * 1024;
+
+    public static WebApplication Build(AgentConfig config, System.Security.Cryptography.X509Certificates.X509Certificate2 certificate)
+    {
+        var address = IPAddress.Parse(config.BindAddress);
+        var builder = WebApplication.CreateSlimBuilder();
         builder.Logging.ClearProviders();
-        builder.WebHost.UseUrls($"http://{config.BindAddress}:{config.Port}");
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.Limits.MaxRequestBodySize = MaximumBodyBytes;
+            options.Listen(address, config.Port, listen =>
+                listen.UseHttps(https => https.ServerCertificate = certificate));
+        });
         var app = builder.Build();
+        var failures = new FailedAuthenticationLimiter(5, TimeSpan.FromMinutes(1));
 
         app.Use(async (context, next) =>
         {
-            var token = context.Request.Headers["X-Auth-Token"].ToString();
-            if (token != config.Token)
+            var source = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            if (failures.IsBlocked(source))
             {
-                Log.Error($"Abgelehnte Anfrage von {context.Connection.RemoteIpAddress} (ungültiges Token)");
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                await context.Response.WriteAsJsonAsync(new ExecuteResponse { Success = false, Error = "Ungültiges Token" });
+                context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                await context.Response.WriteAsJsonAsync(new ExecuteResponse { Success = false, Error = AgentText.Get(config.Language, "TooManyAuth") });
                 return;
             }
+
+            var supplied = context.Request.Headers["X-Auth-Token"].ToString();
+            if (!TokensEqual(supplied, config.Token))
+            {
+                failures.RecordFailure(source);
+                Log.Error($"Anfrage von {source} wegen ungültiger Anmeldung abgelehnt.");
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsJsonAsync(new ExecuteResponse { Success = false, Error = AgentText.Get(config.Language, "InvalidAuth") });
+                return;
+            }
+
+            failures.RecordSuccess(source);
             await next();
         });
 
-        app.MapGet("/ping", () => new PingResponse { MachineName = Environment.MachineName });
+        app.MapGet("/ping", () => Results.Ok(new PingResponse
+        {
+            MachineName = Environment.MachineName,
+            Version = typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown"
+        }));
 
         app.MapPost("/execute", (ExecuteRequest request) =>
         {
+            if (request.Action is null || request.Action.Type is not (KeyActionType.Hotkey or KeyActionType.Command))
+                return Results.Json(new ExecuteResponse { Success = false, Error = AgentText.Get(config.Language, "UnsupportedAction") }, statusCode: 400);
+            if (request.Action.Type == KeyActionType.Hotkey && string.IsNullOrWhiteSpace(request.Action.Hotkey))
+                return Results.Json(new ExecuteResponse { Success = false, Error = AgentText.Get(config.Language, "MissingHotkey") }, statusCode: 400);
+            if (request.Action.Type == KeyActionType.Command && string.IsNullOrWhiteSpace(request.Action.CommandLine))
+                return Results.Json(new ExecuteResponse { Success = false, Error = AgentText.Get(config.Language, "MissingCommand") }, statusCode: 400);
+
             try
             {
-                switch (request.Action.Type)
+                if (request.Action.Type == KeyActionType.Hotkey)
                 {
-                    case KeyActionType.Hotkey:
-                        Log.Info($"Hotkey: {request.Action.Hotkey}");
-                        HotkeyExecutor.Send(request.Action.Hotkey ?? "");
-                        break;
-                    case KeyActionType.Command:
-                        Log.Info($"Befehl: {request.Action.CommandLine}");
-                        CommandExecutor.Run(request.Action.CommandLine ?? "", request.Action.WorkingDirectory);
-                        break;
-                    default:
-                        return Results.Ok(new ExecuteResponse { Success = false, Error = "Keine Aktion konfiguriert" });
+                    Log.Info("Remote-Hotkey wird ausgeführt.");
+                    HotkeyExecutor.Send(request.Action.Hotkey!);
+                }
+                else
+                {
+                    Log.Info("Remote-Befehl wird ausgeführt (Inhalt redigiert).");
+                    CommandExecutor.Run(request.Action.CommandLine!, request.Action.WorkingDirectory);
                 }
                 return Results.Ok(new ExecuteResponse { Success = true });
             }
             catch (Exception ex)
             {
-                Log.Error($"Ausführung fehlgeschlagen: {ex.Message}");
-                return Results.Ok(new ExecuteResponse { Success = false, Error = ex.Message });
+                Log.Error($"Remote-Ausführung fehlgeschlagen: {ex.GetType().Name}");
+                return Results.Json(new ExecuteResponse { Success = false, Error = AgentText.Get(config.Language, "ExecutionFailed") }, statusCode: 500);
             }
         });
 
-        _ = app.RunAsync();
+        return app;
+    }
 
-        Application.EnableVisualStyles();
-        Application.SetHighDpiMode(HighDpiMode.SystemAware);
-        Application.Run(new TrayAppContext(config, () => app.StopAsync().Wait(TimeSpan.FromSeconds(3))));
+    private static bool TokensEqual(string supplied, string expected)
+    {
+        var suppliedBytes = SHA256.HashData(Encoding.UTF8.GetBytes(supplied));
+        var expectedBytes = SHA256.HashData(Encoding.UTF8.GetBytes(expected));
+        return CryptographicOperations.FixedTimeEquals(suppliedBytes, expectedBytes) && supplied.Length == expected.Length;
     }
 }
 
-internal class TrayAppContext : ApplicationContext
+public sealed class FailedAuthenticationLimiter
+{
+    private readonly int _maximumFailures;
+    private readonly TimeSpan _window;
+    private readonly Dictionary<string, Queue<DateTimeOffset>> _failures = new();
+    private readonly object _sync = new();
+
+    public FailedAuthenticationLimiter(int maximumFailures, TimeSpan window)
+    {
+        _maximumFailures = maximumFailures;
+        _window = window;
+    }
+
+    public bool IsBlocked(string source)
+    {
+        lock (_sync)
+        {
+            var queue = GetCurrentFailures(source);
+            return queue.Count >= _maximumFailures;
+        }
+    }
+
+    public void RecordFailure(string source)
+    {
+        lock (_sync)
+            GetCurrentFailures(source).Enqueue(DateTimeOffset.UtcNow);
+    }
+
+    public void RecordSuccess(string source)
+    {
+        lock (_sync)
+            _failures.Remove(source);
+    }
+
+    private Queue<DateTimeOffset> GetCurrentFailures(string source)
+    {
+        if (!_failures.TryGetValue(source, out var queue))
+            _failures[source] = queue = new Queue<DateTimeOffset>();
+        var cutoff = DateTimeOffset.UtcNow - _window;
+        while (queue.TryPeek(out var failure) && failure < cutoff)
+            queue.Dequeue();
+        return queue;
+    }
+}
+
+internal sealed class TrayAppContext : ApplicationContext
 {
     private readonly NotifyIcon _trayIcon;
-    private readonly Action _shutdown;
+    private readonly AgentConfig _config;
+    private readonly WebApplication _app;
+    private readonly string _fingerprint;
 
-    public TrayAppContext(AgentConfig config, Action shutdown)
+    public TrayAppContext(AgentConfig config, string fingerprint, WebApplication app)
     {
-        _shutdown = shutdown;
+        _config = config;
+        _fingerprint = fingerprint;
+        _app = app;
 
         var menu = new ContextMenuStrip();
-        menu.Items.Add($"DisplayPad Agent – Port {config.Port}").Enabled = false;
+        menu.Items.Add($"DisplayPad Agent – HTTPS {config.Port}").Enabled = false;
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Token in Zwischenablage kopieren", null, (_, _) =>
-        {
-            Clipboard.SetText(config.Token);
-            _trayIcon!.ShowBalloonTip(2000, "DisplayPad Agent", "Token kopiert.", ToolTipIcon.Info);
-        });
-        menu.Items.Add("Token anzeigen", null, (_, _) =>
-            MessageBox.Show($"Token: {config.Token}\n\nDiesen Token in der Host-App eintragen.",
-                "DisplayPad Agent", MessageBoxButtons.OK, MessageBoxIcon.Information));
-        menu.Items.Add("Log öffnen", null, (_, _) =>
-        {
-            var logPath = Path.Combine(AppContext.BaseDirectory, "agent.log");
-            if (File.Exists(logPath))
-                Process.Start(new ProcessStartInfo(logPath) { UseShellExecute = true });
-        });
+        menu.Items.Add(AgentText.Get(config.Language, "CopyPairing"), null, (_, _) => CopyPairingData());
+        menu.Items.Add(AgentText.Get(config.Language, "RotateToken"), null, (_, _) => RotateToken());
+        menu.Items.Add(AgentText.Get(config.Language, "OpenLog"), null, (_, _) => OpenLog());
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Beenden", null, (_, _) => ExitApp());
+        menu.Items.Add(AgentText.Get(config.Language, "Exit"), null, (_, _) => ExitApp());
 
         _trayIcon = new NotifyIcon
         {
             Icon = System.Drawing.SystemIcons.Application,
-            Text = $"DisplayPad Agent (Port {config.Port})",
+            Text = $"DisplayPad Agent (HTTPS {config.Port})",
             ContextMenuStrip = menu,
             Visible = true
         };
-
         _trayIcon.ShowBalloonTip(3000, "DisplayPad Agent",
-            $"Läuft auf Port {config.Port} – {Environment.MachineName}", ToolTipIcon.Info);
+            string.Format(AgentText.Get(config.Language, "Running"), Environment.MachineName, config.Port), ToolTipIcon.Info);
+    }
+
+    private void CopyPairingData()
+    {
+        Clipboard.SetText($"Adresse: {Environment.MachineName}:{_config.Port}{Environment.NewLine}Token: {_config.Token}{Environment.NewLine}SHA256: {_fingerprint}");
+        _trayIcon.ShowBalloonTip(2000, "DisplayPad Agent", AgentText.Get(_config.Language, "PairingCopied"), ToolTipIcon.Info);
+    }
+
+    private void RotateToken()
+    {
+        AgentConfig.RotateToken(_config);
+        Clipboard.SetText(_config.Token);
+        _trayIcon.ShowBalloonTip(3000, "DisplayPad Agent", AgentText.Get(_config.Language, "TokenRotated"), ToolTipIcon.Warning);
+    }
+
+    private static void OpenLog()
+    {
+        if (File.Exists(Log.LogPath))
+            Process.Start(new ProcessStartInfo(Log.LogPath) { UseShellExecute = true });
     }
 
     private void ExitApp()
     {
         _trayIcon.Visible = false;
-        try { _shutdown(); } catch { /* Kestrel-Stop darf das Beenden nicht blockieren */ }
-        Application.Exit();
+        try
+        {
+            using var stopTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            _app.StopAsync(stopTimeout.Token).GetAwaiter().GetResult();
+        }
+        catch { }
+        ExitThread();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) _trayIcon.Dispose();
+        base.Dispose(disposing);
     }
 }

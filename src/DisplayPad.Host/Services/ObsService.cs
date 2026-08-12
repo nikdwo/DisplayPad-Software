@@ -7,13 +7,26 @@ namespace DisplayPad.Host.Services;
 /// Verbindung zu OBS über obs-websocket (v5, OBS 28+).
 /// Verbindet lazy; EnsureConnecting() wird periodisch vom Status-Timer aufgerufen.
 /// </summary>
-public class ObsService
+public interface IObsService : IDisposable
 {
-    private OBSWebsocket _obs = new();
+    bool IsConnected { get; }
+    void Configure(string host, int port, string password);
+    void EnsureConnecting();
+    string? Execute(KeyAction action);
+    List<string> GetSceneNames();
+    List<string> GetInputNames();
+}
+
+public sealed class ObsService : IObsService
+{
+    private OBSWebsocket _obs;
     private string _host = "127.0.0.1";
     private int _port = 4455;
     private string _password = "";
     private bool _connecting;
+    private bool _disposed;
+
+    public ObsService() => _obs = CreateClient();
 
     public bool IsConnected => _obs.IsConnected;
 
@@ -28,7 +41,9 @@ public class ObsService
 
         // Einstellungen geändert: alte Verbindung kappen, Timer verbindet neu
         try { if (_obs.IsConnected) _obs.Disconnect(); } catch { /* alte Verbindung ist egal */ }
-        _obs = new OBSWebsocket();
+        _obs.Connected -= OnConnected;
+        _obs.Disconnected -= OnDisconnected;
+        _obs = CreateClient();
         _connecting = false;
     }
 
@@ -40,8 +55,6 @@ public class ObsService
 
         _connecting = true;
         var obs = _obs;
-        obs.Connected += (_, _) => _connecting = false;
-        obs.Disconnected += (_, _) => _connecting = false;
         try
         {
             obs.ConnectAsync($"ws://{_host}:{_port}", _password);
@@ -172,15 +185,17 @@ public class ObsService
     public static string? TestConnection(string host, int port, string password)
     {
         var obs = new OBSWebsocket();
-        var done = new ManualResetEventSlim();
+        using var done = new ManualResetEventSlim();
         string? error = null;
 
-        obs.Connected += (_, _) => done.Set();
-        obs.Disconnected += (_, info) =>
+        EventHandler connected = (_, _) => done.Set();
+        EventHandler<OBSWebsocketDotNet.Communication.ObsDisconnectionInfo> disconnected = (_, info) =>
         {
             error = info.DisconnectReason ?? "Verbindung fehlgeschlagen (läuft der WebSocket-Server? Passwort korrekt?)";
             done.Set();
         };
+        obs.Connected += connected;
+        obs.Disconnected += disconnected;
 
         try
         {
@@ -194,8 +209,30 @@ public class ObsService
         }
         finally
         {
+            obs.Connected -= connected;
+            obs.Disconnected -= disconnected;
             try { obs.Disconnect(); } catch { /* Testverbindung */ }
         }
         return error;
+    }
+
+    private OBSWebsocket CreateClient()
+    {
+        var obs = new OBSWebsocket();
+        obs.Connected += OnConnected;
+        obs.Disconnected += OnDisconnected;
+        return obs;
+    }
+
+    private void OnConnected(object? sender, EventArgs e) => _connecting = false;
+    private void OnDisconnected(object? sender, OBSWebsocketDotNet.Communication.ObsDisconnectionInfo e) => _connecting = false;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _obs.Connected -= OnConnected;
+        _obs.Disconnected -= OnDisconnected;
+        try { if (_obs.IsConnected) _obs.Disconnect(); } catch { }
     }
 }

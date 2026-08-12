@@ -78,7 +78,9 @@
             <TextBlock Text="{DynamicResource LblRemotePort}" Margin="0,0,0,3"/>
             <TextBox x:Name="PortBox" Width="80" HorizontalAlignment="Left" Margin="0,0,0,10"/>
             <TextBlock Text="{DynamicResource LblRemoteToken}" Margin="0,0,0,3"/>
-            <TextBox x:Name="TokenBox" Margin="0,0,0,14"/>
+            <TextBox x:Name="TokenBox" Margin="0,0,0,10"/>
+            <TextBlock Text="{DynamicResource LblRemoteFingerprint}" Margin="0,0,0,3"/>
+            <TextBox x:Name="FingerprintBox" Margin="0,0,0,14"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="{DynamicResource BtnCancel}" Click="Cancel_Click" Margin="0,0,8,0"/>
                 <Button Content="{DynamicResource BtnSave}" Click="Save_Click" FontWeight="Bold"

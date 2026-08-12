@@ -60,16 +60,32 @@ public static class BaseCampManager
     }
 
     /// <returns>null bei Erfolg, sonst Fehlertext.</returns>
-    public static string? Disable() => RunElevated(
-        $"Stop-Service -Name {ServiceName} -Force; " +
-        $"Set-Service -Name {ServiceName} -StartupType Disabled; " +
-        "Stop-Process -Name MountainDisplayPadWorker -Force -ErrorAction SilentlyContinue; " +
-        "Stop-Process -Name 'BaseCamp.Service' -Force -ErrorAction SilentlyContinue");
+    public static string? Disable()
+    {
+        var error = RunElevated(
+            $"Stop-Service -Name {ServiceName} -Force; " +
+            $"Set-Service -Name {ServiceName} -StartupType Disabled; " +
+            "Stop-Process -Name MountainDisplayPadWorker -Force -ErrorAction SilentlyContinue; " +
+            "Stop-Process -Name 'BaseCamp.Service' -Force -ErrorAction SilentlyContinue");
+        if (error is not null) return error;
+        var status = GetStatus();
+        return status.IsConflict || status.StartType != "Disabled"
+            ? "Der angeforderte Zustand wurde nach dem Administrationsprozess nicht erreicht."
+            : null;
+    }
 
     /// <returns>null bei Erfolg, sonst Fehlertext.</returns>
-    public static string? Enable() => RunElevated(
-        $"Set-Service -Name {ServiceName} -StartupType Automatic; " +
-        $"Start-Service -Name {ServiceName}");
+    public static string? Enable()
+    {
+        var error = RunElevated(
+            $"Set-Service -Name {ServiceName} -StartupType Automatic; " +
+            $"Start-Service -Name {ServiceName}");
+        if (error is not null) return error;
+        var status = GetStatus();
+        return status.State != BaseCampState.Running
+            ? "Der Dienst läuft nach dem Administrationsprozess nicht."
+            : null;
+    }
 
     private static string? RunElevated(string script)
     {
@@ -84,8 +100,11 @@ public static class BaseCampManager
                 WindowStyle = ProcessWindowStyle.Hidden
             };
             using var process = Process.Start(psi);
-            process?.WaitForExit(15000);
-            return null;
+            if (process is null)
+                return "Der Administrationsprozess konnte nicht gestartet werden.";
+            if (!process.WaitForExit(15000))
+                return "Zeitüberschreitung beim Administrationsprozess.";
+            return process.ExitCode == 0 ? null : $"Administrationsprozess beendet mit Exitcode {process.ExitCode}.";
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
         {

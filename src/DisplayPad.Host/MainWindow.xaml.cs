@@ -17,6 +17,7 @@ public partial class MainWindow : Window
 
     private readonly WinForms.NotifyIcon _trayIcon;
     private bool _trayHintShown;
+    private bool _isExiting;
 
     public MainWindow()
     {
@@ -24,12 +25,12 @@ public partial class MainWindow : Window
         DataContext = new MainViewModel();
 
         var menu = new WinForms.ContextMenuStrip();
-        menu.Items.Add("Anzeigen", null, (_, _) => ShowFromTray());
-        menu.Items.Add("Minimieren in den Tray", null, (_, _) => HideToTray());
+        menu.Items.Add(Loc.Get("TrayShow"), null, (_, _) => ShowFromTray());
+        menu.Items.Add(Loc.Get("TrayHide"), null, (_, _) => HideToTray());
         menu.Items.Add(new WinForms.ToolStripSeparator());
-        menu.Items.Add("Einstellungen (Konfigurationsordner)", null, (_, _) => OpenConfigFolder());
+        menu.Items.Add(Loc.Get("TrayConfig"), null, (_, _) => OpenConfigFolder());
         menu.Items.Add(new WinForms.ToolStripSeparator());
-        menu.Items.Add("Beenden", null, (_, _) => ExitApplication());
+        menu.Items.Add(Loc.Get("TrayExit"), null, (_, _) => ExitApplication());
 
         _trayIcon = new WinForms.NotifyIcon
         {
@@ -59,7 +60,7 @@ public partial class MainWindow : Window
         {
             _trayHintShown = true;
             _trayIcon.ShowBalloonTip(2500, "DisplayPad Remote",
-                "Läuft im Hintergrund weiter – das Pad bleibt aktiv. Beenden über das Tray-Menü.",
+                Loc.Get("TrayHint"),
                 WinForms.ToolTipIcon.Info);
         }
     }
@@ -72,13 +73,20 @@ public partial class MainWindow : Window
 
     private void ExitApplication()
     {
+        _isExiting = true;
+        ViewModel.Dispose();
         _trayIcon.Visible = false;
         _trayIcon.Dispose();
-        Environment.Exit(0);
+        Application.Current.Shutdown();
     }
 
     protected override void OnClosing(CancelEventArgs e)
     {
+        if (_isExiting)
+        {
+            base.OnClosing(e);
+            return;
+        }
         // X minimiert in den Tray, damit das Pad weiterläuft; echtes Beenden nur über das Tray-Menü
         e.Cancel = true;
         HideToTray();

@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet restore DisplayPadRemote.sln
+      - run: dotnet build DisplayPadRemote.sln -c Release --no-restore
+      - run: dotnet test DisplayPadRemote.sln -c Release --no-build
+      - name: Check localization parity
+        shell: pwsh
+        run: |
+          [xml]$de = Get-Content src/DisplayPad.Host/Localization/Strings.de.xaml
+          [xml]$en = Get-Content src/DisplayPad.Host/Localization/Strings.en.xaml
+          $deKeys = @($de.ResourceDictionary.ChildNodes | ForEach-Object { $_.GetAttribute('Key', 'http://schemas.microsoft.com/winfx/2006/xaml') } | Sort-Object)
+          $enKeys = @($en.ResourceDictionary.ChildNodes | ForEach-Object { $_.GetAttribute('Key', 'http://schemas.microsoft.com/winfx/2006/xaml') } | Sort-Object)
+          if (Compare-Object $deKeys $enKeys) { throw 'German and English resource keys differ.' }
+      - name: Fail on vulnerable packages
+        shell: pwsh
+        run: |
+          $output = dotnet list DisplayPadRemote.sln package --vulnerable --include-transitive | Out-String
+          $output
+          if ($LASTEXITCODE -ne 0) { throw 'Package vulnerability check failed.' }
+          if ($output -match 'has the following vulnerable packages') { throw 'Vulnerable NuGet package detected.' }
+      - name: Publish smoke test
+        shell: cmd
+        run: publish.cmd
