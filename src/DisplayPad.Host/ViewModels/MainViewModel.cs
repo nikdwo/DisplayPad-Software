@@ -140,8 +140,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
     }
 
-    public string AppVersion { get; } =
-        Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+    public string AppVersion { get; } = ProductVersion.FromAssembly(Assembly.GetExecutingAssembly());
 
     public MainViewModel(AppConfig config)
     {
