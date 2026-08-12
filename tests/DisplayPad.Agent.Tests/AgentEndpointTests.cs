@@ -63,7 +63,10 @@ public sealed class AgentEndpointTests
                 Content = JsonContent.Create(new ExecuteRequest { Action = new KeyAction { Type = KeyActionType.Obs } })
             };
             unsupported.Headers.Add("X-Auth-Token", config.Token);
-            Assert.Equal(HttpStatusCode.BadRequest, (await client.SendAsync(unsupported)).StatusCode);
+            var unsupportedResponse = await client.SendAsync(unsupported);
+            Assert.Equal(HttpStatusCode.BadRequest, unsupportedResponse.StatusCode);
+            var unsupportedBody = await unsupportedResponse.Content.ReadFromJsonAsync<ExecuteResponse>();
+            Assert.Equal(OperationErrorCode.AgentUnsupportedAction, unsupportedBody!.ErrorCode);
 
             using var oversized = new HttpRequestMessage(HttpMethod.Post, "/execute")
             {

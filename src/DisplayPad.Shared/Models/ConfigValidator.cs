@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace DisplayPad.Shared.Models;
 
 public static class ConfigValidator
@@ -8,26 +10,27 @@ public static class ConfigValidator
     {
         ArgumentNullException.ThrowIfNull(config);
         if (config.Profiles is null || config.Profiles.Count == 0)
-            throw new ConfigValidationException("Mindestens ein Profil ist erforderlich.");
+            Fail(OperationErrorCode.ConfigProfileRequired);
         if (config.ActiveProfileIndex < 0 || config.ActiveProfileIndex >= config.Profiles.Count)
-            throw new ConfigValidationException("Der aktive Profilindex ist ungültig.");
+            Fail(OperationErrorCode.ConfigActiveProfileInvalid);
         if (config.AgentPort is < 1 or > 65535 || config.ObsPort is < 1 or > 65535)
-            throw new ConfigValidationException("Ports müssen zwischen 1 und 65535 liegen.");
-        if (config.KeyMatrixMap is null || config.KeyMatrixMap.Length != AppConfig.KeyCount || config.KeyMatrixMap.Distinct().Count() != AppConfig.KeyCount)
-            throw new ConfigValidationException("KeyMatrixMap muss zwölf eindeutige Einträge enthalten.");
+            Fail(OperationErrorCode.ConfigPortInvalid);
+        if (config.KeyMatrixMap is null || config.KeyMatrixMap.Length != AppConfig.KeyCount ||
+            config.KeyMatrixMap.Distinct().Count() != AppConfig.KeyCount)
+            Fail(OperationErrorCode.ConfigKeyMatrixInvalid);
         CheckLength(config.AgentHost, 128, nameof(config.AgentHost));
         CheckLength(config.AgentCertificateFingerprint, 128, nameof(config.AgentCertificateFingerprint));
         CheckLength(config.ObsHost, 128, nameof(config.ObsHost));
         if (config.Language is not ("de" or "en"))
-            throw new ConfigValidationException("Language muss 'de' oder 'en' sein.");
+            Fail(OperationErrorCode.ConfigLanguageInvalid);
 
         foreach (var profile in config.Profiles)
         {
             if (profile is null)
-                throw new ConfigValidationException("Profile dürfen nicht null sein.");
-            CheckLength(profile.Name, 128, "Profilname");
+                Fail(OperationErrorCode.ConfigNullProfile);
+            CheckLength(profile.Name, 128, "ProfileName");
             if (profile.Pages is null || profile.Pages.Count == 0)
-                throw new ConfigValidationException("Jedes Profil benötigt mindestens eine Seite.");
+                Fail(OperationErrorCode.ConfigPageRequired);
             foreach (var page in profile.Pages)
                 ValidatePage(page, 0);
         }
@@ -36,49 +39,48 @@ public static class ConfigValidator
     private static void ValidatePage(PageConfig? page, int depth)
     {
         if (page is null)
-            throw new ConfigValidationException("Seiten dürfen nicht null sein.");
+            Fail(OperationErrorCode.ConfigNullPage);
         if (depth > MaximumFolderDepth)
-            throw new ConfigValidationException($"Ordner dürfen höchstens {MaximumFolderDepth} Ebenen tief sein.");
-        CheckLength(page.Name, 128, "Seitenname");
+            Fail(OperationErrorCode.ConfigFolderTooDeep, MaximumFolderDepth.ToString());
+        CheckLength(page.Name, 128, "PageName");
         if (page.Keys is null)
-            throw new ConfigValidationException("Die Tastenliste darf nicht null sein.");
+            Fail(OperationErrorCode.ConfigNullKeys);
 
         var duplicates = page.Keys.GroupBy(k => k?.KeyIndex).Where(g => g.Count() > 1).Select(g => g.Key).ToArray();
         if (duplicates.Length > 0)
-            throw new ConfigValidationException($"Doppelte Tastenindizes: {string.Join(", ", duplicates)}.");
+            Fail(OperationErrorCode.ConfigDuplicateKeys, string.Join(", ", duplicates));
         if (page.Keys.Any(k => k is null || k.KeyIndex is < 0 or >= AppConfig.KeyCount))
-            throw new ConfigValidationException("Tastenindizes müssen zwischen 0 und 11 liegen.");
+            Fail(OperationErrorCode.ConfigKeyIndexInvalid);
 
         page.EnsureKeys();
-        if (page.Keys.Count != AppConfig.KeyCount || !page.Keys.Select(k => k.KeyIndex).SequenceEqual(Enumerable.Range(0, AppConfig.KeyCount)))
-            throw new ConfigValidationException("Jede Seite muss genau die Tasten 0 bis 11 enthalten.");
+        if (page.Keys.Count != AppConfig.KeyCount ||
+            !page.Keys.Select(k => k.KeyIndex).SequenceEqual(Enumerable.Range(0, AppConfig.KeyCount)))
+            Fail(OperationErrorCode.ConfigKeysIncomplete);
 
         foreach (var key in page.Keys)
         {
             if (key.Action is null)
-                throw new ConfigValidationException($"Aktion von Taste {key.KeyIndex} darf nicht null sein.");
-            CheckLength(key.Label, 256, "Tastenbeschriftung");
-            CheckLength(key.IconPath, 1024, "Iconpfad");
+                Fail(OperationErrorCode.ConfigNullAction, (key.KeyIndex + 1).ToString());
+            CheckLength(key.Label, 256, "KeyLabel");
+            CheckLength(key.IconPath, 1024, "IconPath");
             CheckLength(key.Action.Hotkey, 128, "Hotkey");
-            CheckLength(key.Action.CommandLine, 8192, "Befehl");
-            CheckLength(key.Action.WorkingDirectory, 1024, "Arbeitsverzeichnis");
-            CheckLength(key.Action.ObsParameter, 256, "OBS-Parameter");
-            CheckLength(key.Action.ObsParameter2, 256, "OBS-Parameter");
+            CheckLength(key.Action.CommandLine, 8192, "Command");
+            CheckLength(key.Action.WorkingDirectory, 1024, "WorkingDirectory");
+            CheckLength(key.Action.ObsParameter, 256, "ObsParameter");
+            CheckLength(key.Action.ObsParameter2, 256, "ObsParameter");
 
             if (depth > 0 && key.KeyIndex == AppConfig.FolderBackKeyIndex && key.Action.Type != KeyActionType.None)
-                throw new ConfigValidationException("Taste 12 ist in Ordnern ausschließlich für 'Zurück' reserviert.");
+                Fail(OperationErrorCode.ConfigBackKeyReserved);
 
             if (key.Action.Type == KeyActionType.Folder)
             {
-                if (key.KeyIndex == AppConfig.FolderBackKeyIndex && depth > 0)
-                    throw new ConfigValidationException("Taste 12 ist in Ordnern für 'Zurück' reserviert.");
                 if (key.FolderPage is null)
-                    throw new ConfigValidationException("Eine Ordneraktion benötigt eine Zielseite.");
+                    Fail(OperationErrorCode.ConfigFolderTargetRequired);
                 ValidatePage(key.FolderPage, depth + 1);
             }
             else if (key.FolderPage is not null)
             {
-                throw new ConfigValidationException("Nur Ordneraktionen dürfen eine Ordnerseite enthalten.");
+                Fail(OperationErrorCode.ConfigUnexpectedFolderPage);
             }
         }
     }
@@ -86,11 +88,17 @@ public static class ConfigValidator
     private static void CheckLength(string? value, int maximum, string field)
     {
         if (value?.Length > maximum)
-            throw new ConfigValidationException($"{field} darf höchstens {maximum} Zeichen lang sein.");
+            Fail(OperationErrorCode.ConfigFieldTooLong, field, maximum.ToString());
     }
+
+    [DoesNotReturn]
+    private static void Fail(OperationErrorCode code, params string[] parameters) =>
+        throw new ConfigValidationException(OperationResult.Fail(code, parameters: parameters));
 }
 
 public sealed class ConfigValidationException : Exception
 {
-    public ConfigValidationException(string message) : base(message) { }
+    public OperationResult Result { get; }
+
+    public ConfigValidationException(OperationResult result) : base(result.ErrorCode.ToString()) => Result = result;
 }

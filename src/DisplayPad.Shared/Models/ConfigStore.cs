@@ -10,7 +10,7 @@ public interface IConfigRepository
     void Save(AppConfig config);
 }
 
-public sealed record ConfigLoadResult(AppConfig Config, string? Warning = null, bool RecoveredFromBackup = false);
+public sealed record ConfigLoadResult(AppConfig Config, OperationResult? Warning = null, bool RecoveredFromBackup = false);
 
 public sealed class ConfigRepository : IConfigRepository
 {
@@ -23,9 +23,14 @@ public sealed class ConfigRepository : IConfigRepository
     };
 
     private readonly string _path;
+    private readonly IConfigNameProvider? _nameProvider;
     private string BackupPath => _path + ".bak";
 
-    public ConfigRepository(string path) => _path = path;
+    public ConfigRepository(string path, IConfigNameProvider? nameProvider = null)
+    {
+        _path = path;
+        _nameProvider = nameProvider;
+    }
 
     public ConfigLoadResult Load()
     {
@@ -44,32 +49,34 @@ public sealed class ConfigRepository : IConfigRepository
                 {
                     var recovered = ReadAndValidate(BackupPath);
                     return new ConfigLoadResult(recovered,
-                        $"Die Konfiguration war beschädigt und wurde aus '{Path.GetFileName(BackupPath)}' wiederhergestellt.", true);
+                        OperationResult.Fail(OperationErrorCode.ConfigRecoveredFromBackup,
+                            parameters: new[] { Path.GetFileName(BackupPath) }), true);
                 }
                 catch (Exception backupError) when (IsConfigurationError(backupError))
                 {
-                    throw new ConfigLoadException("Konfiguration und Sicherung konnten nicht geladen werden.",
+                    throw new ConfigLoadException(
+                        OperationResult.Fail(OperationErrorCode.ConfigAndBackupInvalid),
                         new AggregateException(primaryError, backupError));
                 }
             }
 
-            throw new ConfigLoadException("Die Konfiguration konnte nicht geladen werden; es gibt keine gültige Sicherung.", primaryError);
+            throw new ConfigLoadException(OperationResult.Fail(OperationErrorCode.ConfigLoadFailed), primaryError);
         }
     }
 
     public void Save(AppConfig config)
     {
         ArgumentNullException.ThrowIfNull(config);
-        config.EnsureProfiles();
+        config.EnsureProfiles(_nameProvider);
         ConfigValidator.Validate(config);
 
         var serializable = Clone(config);
         ProtectSecrets(serializable);
         var json = JsonSerializer.Serialize(serializable, Options);
         if (Encoding.UTF8.GetByteCount(json) > MaximumJsonBytes)
-            throw new ConfigValidationException("Die Konfiguration überschreitet 5 MiB.");
+            throw new ConfigValidationException(OperationResult.Fail(OperationErrorCode.ConfigTooLarge));
 
-        var directory = Path.GetDirectoryName(_path) ?? throw new InvalidOperationException("Ungültiger Konfigurationspfad.");
+        var directory = Path.GetDirectoryName(_path) ?? throw new InvalidOperationException(nameof(_path));
         Directory.CreateDirectory(directory);
         var temporaryPath = _path + ".tmp";
         File.WriteAllText(temporaryPath, json, new UTF8Encoding(false));
@@ -90,37 +97,38 @@ public sealed class ConfigRepository : IConfigRepository
     private static bool IsConfigurationError(Exception error) =>
         error is IOException or UnauthorizedAccessException or JsonException or ConfigValidationException or CryptographicException or FormatException;
 
-    private static AppConfig CreateDefault()
+    private AppConfig CreateDefault()
     {
         var config = new AppConfig();
-        config.EnsureProfiles();
+        config.EnsureProfiles(_nameProvider);
         return config;
     }
 
-    private static AppConfig ReadAndValidate(string path)
+    private AppConfig ReadAndValidate(string path)
     {
-        var info = new FileInfo(path);
-        if (info.Length > MaximumJsonBytes)
-            throw new ConfigValidationException("Die Konfiguration überschreitet 5 MiB.");
+        if (new FileInfo(path).Length > MaximumJsonBytes)
+            throw new ConfigValidationException(OperationResult.Fail(OperationErrorCode.ConfigTooLarge));
 
         var config = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(path), Options)
-            ?? throw new JsonException("Die Konfiguration ist leer.");
+            ?? throw new JsonException(nameof(AppConfig));
         Migrate(config);
         ConfigValidator.Validate(config);
         return config;
     }
 
-    private static void Migrate(AppConfig config)
+    private void Migrate(AppConfig config)
     {
         if (config.ConfigVersion > AppConfig.CurrentConfigVersion)
-            throw new ConfigValidationException($"Konfigurationsversion {config.ConfigVersion} wird nicht unterstützt.");
+            throw new ConfigValidationException(OperationResult.Fail(
+                OperationErrorCode.ConfigVersionUnsupported,
+                parameters: new[] { config.ConfigVersion.ToString() }));
 
         if (!string.IsNullOrWhiteSpace(config.AgentTokenProtected))
             config.AgentToken = SecretProtector.Unprotect(config.AgentTokenProtected);
         if (!string.IsNullOrWhiteSpace(config.ObsPasswordProtected))
             config.ObsPassword = SecretProtector.Unprotect(config.ObsPasswordProtected);
 
-        config.EnsureProfiles();
+        config.EnsureProfiles(_nameProvider);
     }
 
     private static void ProtectSecrets(AppConfig config)
@@ -135,7 +143,7 @@ public sealed class ConfigRepository : IConfigRepository
     {
         var json = JsonSerializer.Serialize(config, Options);
         return JsonSerializer.Deserialize<AppConfig>(json, Options)
-            ?? throw new InvalidOperationException("Konfiguration konnte nicht kopiert werden.");
+            ?? throw new InvalidOperationException(nameof(AppConfig));
     }
 }
 
@@ -145,16 +153,17 @@ public static class ConfigStore
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DisplayPadRemote");
 
     public static string ConfigPath => Path.Combine(ConfigDirectory, "config.json");
-    public static string? LastLoadWarning { get; private set; }
+    public static OperationResult? LastLoadWarning { get; private set; }
 
-    public static AppConfig Load()
+    public static AppConfig Load(IConfigNameProvider? nameProvider = null)
     {
-        var result = new ConfigRepository(ConfigPath).Load();
+        var result = new ConfigRepository(ConfigPath, nameProvider).Load();
         LastLoadWarning = result.Warning;
         return result.Config;
     }
 
-    public static void Save(AppConfig config) => new ConfigRepository(ConfigPath).Save(config);
+    public static void Save(AppConfig config, IConfigNameProvider? nameProvider = null) =>
+        new ConfigRepository(ConfigPath, nameProvider).Save(config);
 }
 
 public static class SecretProtector
@@ -174,5 +183,8 @@ public static class SecretProtector
 
 public sealed class ConfigLoadException : Exception
 {
-    public ConfigLoadException(string message, Exception innerException) : base(message, innerException) { }
+    public OperationResult Result { get; }
+
+    public ConfigLoadException(OperationResult result, Exception innerException)
+        : base(result.ErrorCode.ToString(), innerException) => Result = result;
 }

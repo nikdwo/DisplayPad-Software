@@ -22,9 +22,10 @@ internal static class Program
         Application.SetHighDpiMode(HighDpiMode.SystemAware);
 
         WebApplication? app = null;
+        AgentConfig? config = null;
         try
         {
-            var config = AgentConfig.LoadOrCreate();
+            config = AgentConfig.LoadOrCreate();
             var agentCertificate = AgentCertificateStore.LoadOrCreate(config);
             app = AgentWebApplication.Build(config, agentCertificate.Certificate);
             app.StartAsync().GetAwaiter().GetResult();
@@ -34,7 +35,12 @@ internal static class Program
         catch (Exception ex)
         {
             Log.Error($"Agent-Start fehlgeschlagen: {ex.Message}");
-            MessageBox.Show(ex.ToString(), "DisplayPad Agent – Start fehlgeschlagen",
+            var language = config?.Language ?? (ex as AgentConfigException)?.Language ?? "de";
+            var message = ex is AgentConfigException configError
+                ? AgentText.Get(language, configError.TextKey)
+                : string.Format(AgentText.Get(language, "ErrorWithTechnicalDetail"),
+                    AgentText.Get(language, "StartFailed"), ex.Message);
+            MessageBox.Show(message, AgentText.Get(language, "StartFailedTitle"),
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         finally
@@ -77,7 +83,12 @@ public static class AgentWebApplication
             if (failures.IsBlocked(source))
             {
                 context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-                await context.Response.WriteAsJsonAsync(new ExecuteResponse { Success = false, Error = AgentText.Get(config.Language, "TooManyAuth") });
+                await context.Response.WriteAsJsonAsync(new ExecuteResponse
+                {
+                    Success = false,
+                    ErrorCode = OperationErrorCode.AgentTooManyAuthenticationFailures,
+                    Error = AgentText.Get(config.Language, "TooManyAuth")
+                });
                 return;
             }
 
@@ -87,7 +98,12 @@ public static class AgentWebApplication
                 failures.RecordFailure(source);
                 Log.Error($"Anfrage von {source} wegen ungültiger Anmeldung abgelehnt.");
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                await context.Response.WriteAsJsonAsync(new ExecuteResponse { Success = false, Error = AgentText.Get(config.Language, "InvalidAuth") });
+                await context.Response.WriteAsJsonAsync(new ExecuteResponse
+                {
+                    Success = false,
+                    ErrorCode = OperationErrorCode.AgentInvalidAuthentication,
+                    Error = AgentText.Get(config.Language, "InvalidAuth")
+                });
                 return;
             }
 
@@ -104,11 +120,26 @@ public static class AgentWebApplication
         app.MapPost("/execute", (ExecuteRequest request) =>
         {
             if (request.Action is null || request.Action.Type is not (KeyActionType.Hotkey or KeyActionType.Command))
-                return Results.Json(new ExecuteResponse { Success = false, Error = AgentText.Get(config.Language, "UnsupportedAction") }, statusCode: 400);
+                return Results.Json(new ExecuteResponse
+                {
+                    Success = false,
+                    ErrorCode = OperationErrorCode.AgentUnsupportedAction,
+                    Error = AgentText.Get(config.Language, "UnsupportedAction")
+                }, statusCode: 400);
             if (request.Action.Type == KeyActionType.Hotkey && string.IsNullOrWhiteSpace(request.Action.Hotkey))
-                return Results.Json(new ExecuteResponse { Success = false, Error = AgentText.Get(config.Language, "MissingHotkey") }, statusCode: 400);
+                return Results.Json(new ExecuteResponse
+                {
+                    Success = false,
+                    ErrorCode = OperationErrorCode.AgentMissingHotkey,
+                    Error = AgentText.Get(config.Language, "MissingHotkey")
+                }, statusCode: 400);
             if (request.Action.Type == KeyActionType.Command && string.IsNullOrWhiteSpace(request.Action.CommandLine))
-                return Results.Json(new ExecuteResponse { Success = false, Error = AgentText.Get(config.Language, "MissingCommand") }, statusCode: 400);
+                return Results.Json(new ExecuteResponse
+                {
+                    Success = false,
+                    ErrorCode = OperationErrorCode.AgentMissingCommand,
+                    Error = AgentText.Get(config.Language, "MissingCommand")
+                }, statusCode: 400);
 
             try
             {
@@ -127,7 +158,12 @@ public static class AgentWebApplication
             catch (Exception ex)
             {
                 Log.Error($"Remote-Ausführung fehlgeschlagen: {ex.GetType().Name}");
-                return Results.Json(new ExecuteResponse { Success = false, Error = AgentText.Get(config.Language, "ExecutionFailed") }, statusCode: 500);
+                return Results.Json(new ExecuteResponse
+                {
+                    Success = false,
+                    ErrorCode = OperationErrorCode.AgentExecutionFailed,
+                    Error = AgentText.Get(config.Language, "ExecutionFailed")
+                }, statusCode: 500);
             }
         });
 
@@ -222,7 +258,10 @@ internal sealed class TrayAppContext : ApplicationContext
 
     private void CopyPairingData()
     {
-        Clipboard.SetText($"Adresse: {Environment.MachineName}:{_config.Port}{Environment.NewLine}Token: {_config.Token}{Environment.NewLine}SHA256: {_fingerprint}");
+        Clipboard.SetText(
+            $"{AgentText.Get(_config.Language, "PairingAddress")}: {Environment.MachineName}:{_config.Port}{Environment.NewLine}" +
+            $"{AgentText.Get(_config.Language, "PairingToken")}: {_config.Token}{Environment.NewLine}" +
+            $"{AgentText.Get(_config.Language, "PairingFingerprint")}: {_fingerprint}");
         _trayIcon.ShowBalloonTip(2000, "DisplayPad Agent", AgentText.Get(_config.Language, "PairingCopied"), ToolTipIcon.Info);
     }
 

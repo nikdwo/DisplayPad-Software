@@ -49,18 +49,28 @@ public sealed class ActionDispatcher : IRemoteAgentClient, IDisposable
     public async Task<ExecuteResponse> ExecuteAsync(KeyAction action, CancellationToken cancellationToken = default)
     {
         if (_http is null)
-            return new ExecuteResponse { Success = false, Error = Loc.Get("MsgMissingFingerprint") };
+            return new ExecuteResponse { Success = false, ErrorCode = OperationErrorCode.RemoteMissingFingerprint };
         try
         {
             using var request = CreateRequest(HttpMethod.Post, "/execute");
             request.Content = JsonContent.Create(new ExecuteRequest { Action = action });
             using var response = await _http.SendAsync(request, cancellationToken);
             var result = await response.Content.ReadFromJsonAsync<ExecuteResponse>(cancellationToken: cancellationToken);
-            return result ?? new ExecuteResponse { Success = false, Error = string.Format(Loc.Get("MsgAgentHttpError"), (int)response.StatusCode) };
+            return result ?? new ExecuteResponse
+            {
+                Success = false,
+                ErrorCode = OperationErrorCode.RemoteHttpError,
+                ErrorParameters = new[] { ((int)response.StatusCode).ToString() }
+            };
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            return new ExecuteResponse { Success = false, Error = ex.Message };
+            return new ExecuteResponse
+            {
+                Success = false,
+                ErrorCode = OperationErrorCode.RemoteNetworkError,
+                Error = ex.Message
+            };
         }
     }
 

@@ -143,9 +143,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public string AppVersion { get; } =
         Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
 
-    public MainViewModel()
+    public MainViewModel(AppConfig config)
     {
-        _config = ConfigStore.Load();
+        _config = config;
         _agentHost = _config.AgentHost;
         _agentPort = _config.AgentPort;
         _agentToken = _config.AgentToken;
@@ -217,8 +217,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _ = RefreshObsStatusAsync();
 
         _initialized = true;
-        if (!string.IsNullOrWhiteSpace(ConfigStore.LastLoadWarning))
-            StatusMessage = ConfigStore.LastLoadWarning;
+        if (ConfigStore.LastLoadWarning is not null)
+            StatusMessage = OperationText.Format(ConfigStore.LastLoadWarning);
     }
 
     private void TakeControlIfConfigured()
@@ -239,8 +239,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         Loc.Switch(value);
         _config.Language = value;
-        try { ConfigStore.Save(_config); }
-        catch (Exception ex) { StatusMessage = string.Format(Loc.Get("MsgOperationFailed"), ex.Message); }
+        try
+        {
+            ConfigStore.Save(_config, new HostConfigNameProvider());
+            StatusMessage = Loc.Get("MsgLanguageChanged");
+        }
+        catch (Exception ex) { StatusMessage = OperationText.Format(OperationText.FromException(ex)); }
         OnPropertyChanged(nameof(EditorBreadcrumb));
         DeviceStatusText = DeviceConnected ? Loc.Get("MsgDeviceConnected") : Loc.Get("MsgDeviceDisconnected");
         _ = RefreshAgentStatusAsync();
@@ -403,7 +407,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         key.IsPressed = true;
         _ = Task.Delay(250).ContinueWith(_ => RunOnUi(() => key.IsPressed = false));
 
-        await ExecuteKeyAsync(key, $"Taste {index + 1}");
+        await ExecuteKeyAsync(key, string.Format(Loc.Get("ActionSourceKey"), index + 1));
     }
 
     private async Task ExecuteKeyAsync(KeyViewModel key, string sourceLabel)
@@ -427,45 +431,53 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         if (key.ActionType == KeyActionType.Obs)
         {
-            string? obsError = await Task.Run(() => _obsService.Execute(action));
-            StatusMessage = obsError is null
-                ? $"{sourceLabel}: {Loc.Get("MsgOBSDone")}"
-                : $"{sourceLabel}: {string.Format(Loc.Get("MsgOBSError"), obsError)}";
+            OperationResult obsResult = await Task.Run(() => _obsService.Execute(action));
+            StatusMessage = obsResult.Success
+                ? string.Format(Loc.Get("ActionResult"), sourceLabel, Loc.Get("MsgOBSDone"))
+                : string.Format(Loc.Get("ActionResult"), sourceLabel,
+                    string.Format(Loc.Get("MsgOBSError"), OperationText.Format(obsResult)));
             return;
         }
 
         if (key.ActionType == KeyActionType.Nvidia)
         {
-            string? nvError = await Task.Run(() => NvidiaOverlayService.Execute(action.NvidiaFunction));
-            StatusMessage = nvError is null
-                ? $"{sourceLabel}: {Loc.Get("MsgNvidiaDone")}"
-                : $"{sourceLabel}: {string.Format(Loc.Get("MsgNvidiaError"), nvError)}";
+            OperationResult nvResult = await Task.Run(() => NvidiaOverlayService.Execute(action.NvidiaFunction));
+            StatusMessage = nvResult.Success
+                ? string.Format(Loc.Get("ActionResult"), sourceLabel, Loc.Get("MsgNvidiaDone"))
+                : string.Format(Loc.Get("ActionResult"), sourceLabel,
+                    string.Format(Loc.Get("MsgNvidiaError"), OperationText.Format(nvResult)));
             return;
         }
 
-        string? localError = null;
+        OperationResult localResult = OperationResult.Ok();
         bool ranLocal = false;
         if (key.Target is ActionTarget.Local or ActionTarget.Both)
         {
             ranLocal = true;
-            localError = LocalActionExecutor.Execute(action);
+            localResult = LocalActionExecutor.Execute(action);
         }
 
-        string? remoteError = null;
+        OperationResult remoteResult = OperationResult.Ok();
         bool ranRemote = false;
         if (key.Target is ActionTarget.Remote or ActionTarget.Both)
         {
             ranRemote = true;
             var result = await _dispatcher.ExecuteAsync(action);
-            remoteError = result.Success ? null : (result.Error ?? "unbekannter Fehler");
+            remoteResult = result.Success
+                ? OperationResult.Ok()
+                : OperationResult.Fail(
+                    result.ErrorCode == OperationErrorCode.None ? OperationErrorCode.Unknown : result.ErrorCode,
+                    result.ErrorCode == OperationErrorCode.None ? result.Error : null,
+                    result.ErrorParameters);
         }
 
         var parts = new List<string>();
         if (ranLocal)
-            parts.Add(localError is null ? Loc.Get("MsgLocalOk") : string.Format(Loc.Get("MsgLocalError"), localError));
+            parts.Add(localResult.Success ? Loc.Get("MsgLocalOk") : string.Format(Loc.Get("MsgLocalError"), OperationText.Format(localResult)));
         if (ranRemote)
-            parts.Add(remoteError is null ? Loc.Get("MsgRemoteOk") : string.Format(Loc.Get("MsgRemoteError"), remoteError));
-        StatusMessage = $"{sourceLabel}: {string.Join(", ", parts)}";
+            parts.Add(remoteResult.Success ? Loc.Get("MsgRemoteOk") : string.Format(Loc.Get("MsgRemoteError"), OperationText.Format(remoteResult)));
+        StatusMessage = string.Format(Loc.Get("ActionResult"), sourceLabel,
+            string.Join(Loc.Get("ActionResultSeparator"), parts));
     }
 
     private void SwitchPage(KeyAction action)
@@ -516,14 +528,14 @@ public partial class MainViewModel : ObservableObject, IDisposable
             _config.ObsPassword = ObsPassword;
             _config.Profiles = Profiles.Select(p => p.ToModel()).ToList();
             _config.ActiveProfileIndex = Math.Max(0, Profiles.IndexOf(ActiveProfile!));
-            ConfigStore.Save(_config);
+            ConfigStore.Save(_config, new HostConfigNameProvider());
             _dispatcher.Configure(AgentHost, AgentPort, AgentToken, AgentCertificateFingerprint);
             _obsService.Configure(ObsHost, ObsPort, ObsPassword);
             StatusMessage = Loc.Get("MsgSaved");
         }
         catch (Exception ex)
         {
-            StatusMessage = string.Format(Loc.Get("MsgOperationFailed"), ex.Message);
+            StatusMessage = OperationText.Format(OperationText.FromException(ex));
         }
     }
 
@@ -532,8 +544,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void AddProfile()
     {
-        var profile = new ProfileConfig { Name = $"Profil {Profiles.Count + 1}" };
-        profile.EnsurePages();
+        var profile = new ProfileConfig { Name = LocalizedNames.Profile(Profiles.Count + 1) };
+        profile.EnsurePages(new HostConfigNameProvider(), Language);
         var vm = new ProfileViewModel(profile);
         Profiles.Add(vm);
         ActiveProfile = vm;
@@ -563,8 +575,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         var copy = JsonSerializer.Deserialize<ProfileConfig>(
             JsonSerializer.Serialize(ActiveProfile.ToModel(), _jsonOptions), _jsonReadOptions)
             ?? new ProfileConfig();
-        copy.Name = $"{copy.Name} (Kopie)";
-        copy.EnsurePages();
+        copy.Name = LocalizedNames.Copy(copy.Name);
+        copy.EnsurePages(new HostConfigNameProvider(), Language);
         var vm = new ProfileViewModel(copy);
         Profiles.Add(vm);
         ActiveProfile = vm;
@@ -592,7 +604,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         var dlg = new SaveFileDialog
         {
-            Filter = "DisplayPad-Profil (*.dpprofile)|*.dpprofile",
+            Filter = Loc.Get("DlgProfileExportFilter"),
             FileName = ActiveProfile.Name
         };
         if (dlg.ShowDialog() != true)
@@ -603,7 +615,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
             File.WriteAllText(dlg.FileName, JsonSerializer.Serialize(ActiveProfile.ToModel(), _jsonOptions));
             StatusMessage = Loc.Get("MsgProfileExported");
         }
-        catch (Exception ex) { StatusMessage = string.Format(Loc.Get("MsgOperationFailed"), ex.Message); }
+        catch (Exception ex) { StatusMessage = OperationText.Format(OperationText.FromException(ex)); }
     }
 
     [RelayCommand]
@@ -611,7 +623,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         var dlg = new OpenFileDialog
         {
-            Filter = "DisplayPad-Profil (*.dpprofile)|*.dpprofile|JSON (*.json)|*.json"
+            Filter = Loc.Get("DlgProfileImportFilter")
         };
         if (dlg.ShowDialog() != true)
             return;
@@ -620,7 +632,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
         try
         {
             if (new FileInfo(dlg.FileName).Length > ConfigRepository.MaximumJsonBytes)
-                throw new ConfigValidationException("Die Importdatei überschreitet 5 MiB.");
+            {
+                StatusMessage = OperationText.Format(OperationResult.Fail(OperationErrorCode.ConfigTooLarge));
+                return;
+            }
             model = JsonSerializer.Deserialize<ProfileConfig>(File.ReadAllText(dlg.FileName), _jsonReadOptions);
         }
         catch
@@ -637,14 +652,18 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         try
         {
-            model.EnsurePages();
-            var validationConfig = new AppConfig { Profiles = new List<ProfileConfig> { model } };
-            validationConfig.EnsureProfiles();
+            model.EnsurePages(new HostConfigNameProvider(), Language);
+            var validationConfig = new AppConfig
+            {
+                Language = Language,
+                Profiles = new List<ProfileConfig> { model }
+            };
+            validationConfig.EnsureProfiles(new HostConfigNameProvider());
             ConfigValidator.Validate(validationConfig);
         }
         catch (Exception ex)
         {
-            StatusMessage = string.Format(Loc.Get("MsgOperationFailed"), ex.Message);
+            StatusMessage = OperationText.Format(OperationText.FromException(ex));
             return;
         }
         var vm = new ProfileViewModel(model);
@@ -661,7 +680,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         if (ActiveProfile is null)
             return;
 
-        var page = new PageConfig { Name = $"Seite {Pages.Count + 1}" };
+        var page = new PageConfig { Name = LocalizedNames.Page(Pages.Count + 1) };
         page.EnsureKeys();
         var vm = new PageViewModel(page);
         ActiveProfile.Pages.Add(vm);
@@ -693,7 +712,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         var dlg = new SaveFileDialog
         {
-            Filter = "DisplayPad-Seite (*.dppage)|*.dppage",
+            Filter = Loc.Get("DlgPageExportFilter"),
             FileName = ActivePage.Name
         };
         if (dlg.ShowDialog() != true)
@@ -704,7 +723,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
             File.WriteAllText(dlg.FileName, JsonSerializer.Serialize(ActivePage.ToModel(), _jsonOptions));
             StatusMessage = Loc.Get("MsgPageExported");
         }
-        catch (Exception ex) { StatusMessage = string.Format(Loc.Get("MsgOperationFailed"), ex.Message); }
+        catch (Exception ex) { StatusMessage = OperationText.Format(OperationText.FromException(ex)); }
     }
 
     [RelayCommand]
@@ -715,7 +734,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         var dlg = new OpenFileDialog
         {
-            Filter = "DisplayPad-Seite (*.dppage)|*.dppage|JSON (*.json)|*.json"
+            Filter = Loc.Get("DlgPageImportFilter")
         };
         if (dlg.ShowDialog() != true)
             return;
@@ -724,7 +743,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
         try
         {
             if (new FileInfo(dlg.FileName).Length > ConfigRepository.MaximumJsonBytes)
-                throw new ConfigValidationException("Die Importdatei überschreitet 5 MiB.");
+            {
+                StatusMessage = OperationText.Format(OperationResult.Fail(OperationErrorCode.ConfigTooLarge));
+                return;
+            }
             model = JsonSerializer.Deserialize<PageConfig>(File.ReadAllText(dlg.FileName), _jsonReadOptions);
         }
         catch
@@ -744,17 +766,18 @@ public partial class MainViewModel : ObservableObject, IDisposable
             model.EnsureKeys();
             var validationConfig = new AppConfig
             {
+                Language = Language,
                 Profiles = new List<ProfileConfig>
                 {
                     new() { Pages = new List<PageConfig> { model } }
                 }
             };
-            validationConfig.EnsureProfiles();
+            validationConfig.EnsureProfiles(new HostConfigNameProvider());
             ConfigValidator.Validate(validationConfig);
         }
         catch (Exception ex)
         {
-            StatusMessage = string.Format(Loc.Get("MsgOperationFailed"), ex.Message);
+            StatusMessage = OperationText.Format(OperationText.FromException(ex));
             return;
         }
         var vm = new PageViewModel(model);
@@ -817,22 +840,22 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private async Task DisableBaseCampAsync()
     {
         StatusMessage = Loc.Get("MsgDisablingBC");
-        string? error = await Task.Run(BaseCampManager.Disable);
+        OperationResult result = await Task.Run(BaseCampManager.Disable);
         RefreshBaseCampStatus();
-        StatusMessage = error is null
+        StatusMessage = result.Success
             ? Loc.Get("MsgBCDisabled")
-            : string.Format(Loc.Get("MsgBCDisableFail"), error);
+            : string.Format(Loc.Get("MsgBCDisableFail"), OperationText.Format(result));
     }
 
     [RelayCommand]
     private async Task EnableBaseCampAsync()
     {
         StatusMessage = Loc.Get("MsgEnablingBC");
-        string? error = await Task.Run(BaseCampManager.Enable);
+        OperationResult result = await Task.Run(BaseCampManager.Enable);
         RefreshBaseCampStatus();
-        StatusMessage = error is null
+        StatusMessage = result.Success
             ? Loc.Get("MsgBCEnabled")
-            : string.Format(Loc.Get("MsgBCEnableFail"), error);
+            : string.Format(Loc.Get("MsgBCEnableFail"), OperationText.Format(result));
     }
 
     [RelayCommand]
@@ -885,12 +908,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
             return;
 
         _dispatcher.Configure(AgentHost, AgentPort, AgentToken, AgentCertificateFingerprint);
-        await ExecuteKeyAsync(SelectedKey, "Test");
+        await ExecuteKeyAsync(SelectedKey, Loc.Get("ActionSourceTest"));
     }
 
     private async Task OpenFolderOnDeviceAsync(KeyViewModel key)
     {
-        key.EnsureFolderPage();
+        key.EnsureFolderPage(LocalizedNames.Folder(key.KeyNumber));
         var targetPage = key.FolderPage!;
         var previousPage = _runtimePage!;
         if (!DeviceConnected || await UploadPageToDeviceAsync(targetPage, silent: true, renderBackButton: true))
@@ -915,7 +938,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private void OpenFolderEditor()
     {
         if (SelectedKey?.ActionType != KeyActionType.Folder) return;
-        SelectedKey.EnsureFolderPage();
+        SelectedKey.EnsureFolderPage(LocalizedNames.Folder(SelectedKey.KeyNumber));
         _editorStack.Push((ActivePage!, SelectedKey));
         EditorPage = SelectedKey.FolderPage;
         OnPropertyChanged(nameof(InFolderEditor));

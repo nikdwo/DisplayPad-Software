@@ -10,6 +10,9 @@ public class ExecuteRequest
 public class ExecuteResponse
 {
     public bool Success { get; set; }
+    public OperationErrorCode ErrorCode { get; set; }
+    public string[] ErrorParameters { get; set; } = Array.Empty<string>();
+    /// <summary>Optionales technisches Detail für Abwärtskompatibilität; nicht direkt als UI-Text verwenden.</summary>
     public string? Error { get; set; }
 }
 

@@ -4,7 +4,7 @@ namespace DisplayPad.Shared.Models;
 
 public class PageConfig
 {
-    public string Name { get; set; } = "Seite";
+    public string Name { get; set; } = null!;
     public List<KeyConfig> Keys { get; set; } = new();
 
     public void EnsureKeys()
@@ -23,16 +23,20 @@ public class PageConfig
 
 public class ProfileConfig
 {
-    public string Name { get; set; } = "Profil";
+    public string Name { get; set; } = null!;
     public List<PageConfig> Pages { get; set; } = new();
 
-    public void EnsurePages()
+    public void EnsurePages(IConfigNameProvider? names = null, string language = "en")
     {
         Pages ??= new List<PageConfig>();
         if (Pages.Count == 0)
-            Pages.Add(new PageConfig { Name = "Seite 1" });
-        foreach (var page in Pages)
+            Pages.Add(new PageConfig { Name = names?.PageName(language, 1) ?? "Page 1" });
+        for (var index = 0; index < Pages.Count; index++)
+        {
+            var page = Pages[index];
+            page.Name ??= names?.PageName(language, index + 1) ?? $"Page {index + 1}";
             page.EnsureKeys();
+        }
     }
 }
 
@@ -90,7 +94,7 @@ public class AppConfig
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<KeyConfig>? Keys { get; set; }
 
-    public void EnsureProfiles()
+    public void EnsureProfiles(IConfigNameProvider? names = null)
     {
         Profiles ??= new List<ProfileConfig>();
         // Stufe 1: sehr alte config (Keys-Liste) → erste Seite in Pages
@@ -98,26 +102,28 @@ public class AppConfig
         {
             Pages ??= new List<PageConfig>();
             if (Pages.Count == 0)
-                Pages.Add(new PageConfig { Name = "Seite 1", Keys = Keys });
+                Pages.Add(new PageConfig { Name = names?.PageName(Language, 1) ?? "Page 1", Keys = Keys });
         }
         Keys = null;
 
         // Stufe 2: bisherige Pages-Liste → Profil 1
         if (Profiles.Count == 0 && Pages is { Count: > 0 })
-            Profiles.Add(new ProfileConfig { Name = "Profil 1", Pages = Pages });
+            Profiles.Add(new ProfileConfig { Name = names?.ProfileName(Language, 1) ?? "Profile 1", Pages = Pages });
         Pages = null;
 
         // Fallback: leeres Standard-Profil
         if (Profiles.Count == 0)
-            Profiles.Add(new ProfileConfig { Name = "Profil 1" });
+            Profiles.Add(new ProfileConfig { Name = names?.ProfileName(Language, 1) ?? "Profile 1" });
 
         if (ActiveProfileIndex < 0 || ActiveProfileIndex >= Profiles.Count)
             ActiveProfileIndex = 0;
 
-        foreach (var profile in Profiles)
+        for (var index = 0; index < Profiles.Count; index++)
         {
+            var profile = Profiles[index];
+            profile.Name ??= names?.ProfileName(Language, index + 1) ?? $"Profile {index + 1}";
             profile.Pages ??= new List<PageConfig>();
-            profile.EnsurePages();
+            profile.EnsurePages(names, Language);
         }
 
         ConfigVersion = CurrentConfigVersion;

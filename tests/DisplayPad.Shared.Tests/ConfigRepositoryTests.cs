@@ -83,7 +83,8 @@ public sealed class ConfigRepositoryTests : IDisposable
 
         Assert.True(result.RecoveredFromBackup);
         Assert.NotNull(result.Warning);
-        Assert.Equal("Profil 1", result.Config.Profiles[0].Name);
+        Assert.Equal(OperationErrorCode.ConfigRecoveredFromBackup, result.Warning!.ErrorCode);
+        Assert.Equal("Profile 1", result.Config.Profiles[0].Name);
     }
 
     [Fact]
@@ -102,11 +103,74 @@ public sealed class ConfigRepositoryTests : IDisposable
         Assert.Equal("obs-secret-value", repository.Load().Config.ObsPassword);
     }
 
+    [Theory]
+    [InlineData("de", "Profil 1", "Seite 1")]
+    [InlineData("en", "Profile 1", "Page 1")]
+    public void NewDefaultsUseConfiguredLanguage(string language, string expectedProfile, string expectedPage)
+    {
+        var config = new AppConfig { Language = language };
+        config.EnsureProfiles(new TestNameProvider());
+
+        Assert.Equal(expectedProfile, config.Profiles[0].Name);
+        Assert.Equal(expectedPage, config.Profiles[0].Pages[0].Name);
+    }
+
+    [Fact]
+    public void ExistingNamesRemainUnchangedWhenLanguageChanges()
+    {
+        var config = new AppConfig
+        {
+            Language = "de",
+            Profiles =
+            [
+                new ProfileConfig
+                {
+                    Name = "Mein Profil",
+                    Pages = [new PageConfig { Name = "Meine Seite" }]
+                }
+            ]
+        };
+        config.EnsureProfiles(new TestNameProvider());
+        config.Language = "en";
+        config.EnsureProfiles(new TestNameProvider());
+
+        Assert.Equal("Mein Profil", config.Profiles[0].Name);
+        Assert.Equal("Meine Seite", config.Profiles[0].Pages[0].Name);
+    }
+
+    [Theory]
+    [InlineData("de", "Profil 1", "Seite 1")]
+    [InlineData("en", "Profile 1", "Page 1")]
+    public void MigrationCreatedElementsUseConfiguredLanguage(string language, string expectedProfile, string expectedPage)
+    {
+        var config = new AppConfig
+        {
+            Language = language,
+            Profiles = [],
+            Pages = [],
+            Keys = [new KeyConfig { KeyIndex = 0 }]
+        };
+
+        config.EnsureProfiles(new TestNameProvider());
+
+        Assert.Equal(expectedProfile, config.Profiles[0].Name);
+        Assert.Equal(expectedPage, config.Profiles[0].Pages[0].Name);
+    }
+
     private static AppConfig CreateConfig()
     {
         var config = new AppConfig();
         config.EnsureProfiles();
         return config;
+    }
+
+    private sealed class TestNameProvider : IConfigNameProvider
+    {
+        public string ProfileName(string language, int number) =>
+            language == "de" ? $"Profil {number}" : $"Profile {number}";
+
+        public string PageName(string language, int number) =>
+            language == "de" ? $"Seite {number}" : $"Page {number}";
     }
 
     public void Dispose()

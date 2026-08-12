@@ -44,27 +44,34 @@ public sealed class AgentConfig
         try
         {
             if (new FileInfo(path).Length > 1024 * 1024)
-                throw new InvalidDataException("Die Agent-Konfiguration ist zu groß.");
+                throw new AgentConfigException("ConfigTooLarge");
             var config = JsonSerializer.Deserialize<AgentConfig>(File.ReadAllText(path))
-                ?? throw new JsonException("Die Agent-Konfiguration ist leer.");
+                ?? throw new AgentConfigException("ConfigEmpty");
+            var errorLanguage = config.Language == "en" ? "en" : "de";
             if (config.ConfigVersion > CurrentVersion)
-                throw new InvalidDataException($"Agent-Konfigurationsversion {config.ConfigVersion} wird nicht unterstützt.");
+                throw new AgentConfigException("ConfigVersionUnsupported", errorLanguage);
+            if (config.Language is not ("de" or "en"))
+                throw new AgentConfigException("ConfigLanguageInvalid");
             if (config.Port is < 1 or > 65535 || string.IsNullOrWhiteSpace(config.BindAddress))
-                throw new InvalidDataException("BindAddress oder Port ist ungültig.");
+                throw new AgentConfigException("ConfigEndpointInvalid", errorLanguage);
 
             config.Token = !string.IsNullOrWhiteSpace(config.TokenProtected)
                 ? SecretProtector.Unprotect(config.TokenProtected)
                 : config.LegacyToken ?? "";
             if (string.IsNullOrWhiteSpace(config.Token))
-                throw new InvalidDataException("Das Agent-Token fehlt. Es wird aus Sicherheitsgründen nicht automatisch ersetzt.");
+                throw new AgentConfigException("ConfigTokenMissing", errorLanguage);
 
             config.ConfigVersion = CurrentVersion;
             Save(config);
             return config;
         }
+        catch (AgentConfigException)
+        {
+            throw;
+        }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or CryptographicException or FormatException or InvalidDataException)
         {
-            throw new AgentConfigException($"Agent-Konfiguration '{path}' konnte nicht sicher geladen werden.", ex);
+            throw new AgentConfigException("ConfigLoadFailed", innerException: ex);
         }
     }
 
@@ -107,5 +114,13 @@ public sealed class AgentConfig
 
 public sealed class AgentConfigException : Exception
 {
-    public AgentConfigException(string message, Exception innerException) : base(message, innerException) { }
+    public AgentConfigException(string textKey, string language = "de", Exception? innerException = null)
+        : base(textKey, innerException)
+    {
+        TextKey = textKey;
+        Language = language;
+    }
+
+    public string TextKey { get; }
+    public string Language { get; }
 }

@@ -6,8 +6,7 @@ namespace DisplayPad.Host.Services;
 /// <summary>Führt eine KeyAction direkt auf dem Hauptrechner aus.</summary>
 public static class LocalActionExecutor
 {
-    /// <returns>null bei Erfolg, sonst Fehlertext.</returns>
-    public static string? Execute(KeyAction action)
+    public static OperationResult Execute(KeyAction action)
     {
         try
         {
@@ -15,17 +14,17 @@ public static class LocalActionExecutor
             {
                 case KeyActionType.Hotkey:
                     HotkeyExecutor.Send(action.Hotkey ?? "");
-                    return null;
+                    return OperationResult.Ok();
                 case KeyActionType.Command:
                     CommandExecutor.Run(action.CommandLine ?? "", action.WorkingDirectory);
-                    return null;
+                    return OperationResult.Ok();
                 default:
-                    return "Keine lokal ausführbare Aktion";
+                    return OperationResult.Fail(OperationErrorCode.LocalUnsupportedAction);
             }
         }
         catch (Exception ex)
         {
-            return ex.Message;
+            return OperationResult.Fail(OperationErrorCode.Unknown, ex.Message);
         }
     }
 }

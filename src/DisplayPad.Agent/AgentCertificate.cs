@@ -14,7 +14,7 @@ public static class AgentCertificateStore
         if (File.Exists(AgentConfig.CertificatePath))
         {
             if (string.IsNullOrWhiteSpace(config.CertificatePasswordProtected))
-                throw new AgentConfigException("Das Zertifikat ist vorhanden, aber sein geschütztes Kennwort fehlt.", new InvalidDataException());
+                throw new AgentConfigException("CertificatePasswordMissing");
             var existingPassword = SecretProtector.Unprotect(config.CertificatePasswordProtected);
             var existing = new X509Certificate2(AgentConfig.CertificatePath, existingPassword,
                 X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet);

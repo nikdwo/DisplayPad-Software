@@ -11,13 +11,13 @@ public partial class App : Application
         base.OnStartup(e);
         try
         {
-            var config = ConfigStore.Load();
+            var config = ConfigStore.Load(new HostConfigNameProvider());
             Loc.Switch(config.Language);
-            new MainWindow().Show();
+            new MainWindow(config).Show();
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.ToString(), "DisplayPad Remote – Konfiguration konnte nicht geladen werden",
+            MessageBox.Show(OperationText.Format(OperationText.FromException(ex)), Loc.Get("HostStartFailedTitle"),
                 MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1);
         }

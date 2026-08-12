@@ -2,6 +2,7 @@ using DisplayPad.Host.Services;
 using DisplayPad.Host.ViewModels;
 using System.Windows;
 using System.Windows.Media;
+using DisplayPad.Shared.Models;
 
 namespace DisplayPad.Host;
 
@@ -22,7 +23,7 @@ public partial class ObsSettingsWindow : Window
     {
         if (int.TryParse(PortBox.Text, out port) && port is >= 1 and <= 65535)
             return true;
-        MessageBox.Show(Loc.Get("MsgInvalidPort"), "OBS", MessageBoxButton.OK, MessageBoxImage.Warning);
+        MessageBox.Show(Loc.Get("MsgInvalidPort"), Loc.Get("DlgObsTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
         return false;
     }
 
@@ -37,10 +38,12 @@ public partial class ObsSettingsWindow : Window
 
         string host = HostBox.Text.Trim();
         string password = PasswordBox.Password;
-        string? error = await Task.Run(() => ObsService.TestConnection(host, port, password));
+        OperationResult result = await Task.Run(() => ObsService.TestConnection(host, port, password));
 
-        TestResult.Text = error is null ? Loc.Get("MsgConnSuccess") : $"Fehler: {error}";
-        TestResult.Foreground = new SolidColorBrush(error is null
+        TestResult.Text = result.Success
+            ? Loc.Get("MsgConnSuccess")
+            : string.Format(Loc.Get("MsgConnectionError"), OperationText.Format(result));
+        TestResult.Foreground = new SolidColorBrush(result.Success
             ? Color.FromRgb(0x5C, 0xB8, 0x5C)
             : Color.FromRgb(0xD9, 0x53, 0x4F));
         TestButton.IsEnabled = true;

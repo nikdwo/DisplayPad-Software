@@ -851,8 +851,8 @@
                         <Border Background="#1C1C1C" CornerRadius="8" BorderBrush="#2C2C2C" BorderThickness="1" Padding="14" Margin="0,0,0,16">
                             <ComboBox SelectedValue="{Binding Language}" SelectedValuePath="Tag" Width="200"
                                       HorizontalAlignment="Left">
-                                <ComboBoxItem Content="Deutsch" Tag="de"/>
-                                <ComboBoxItem Content="English" Tag="en"/>
+                                <ComboBoxItem Content="{DynamicResource LanguageGerman}" Tag="de"/>
+                                <ComboBoxItem Content="{DynamicResource LanguageEnglish}" Tag="en"/>
                             </ComboBox>
                         </Border>
 
@@ -870,7 +870,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{DynamicResource LblDeveloper}"
                                                Foreground="#7A7A7A"/>
-                                    <TextBlock Grid.Column="1" Text="ItzMayzTV"/>
+                                    <TextBlock Grid.Column="1" Text="{DynamicResource CreatorName}"/>
                                 </Grid>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
