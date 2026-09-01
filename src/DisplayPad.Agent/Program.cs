@@ -114,7 +114,7 @@ public static class AgentWebApplication
         app.MapGet("/ping", () => Results.Ok(new PingResponse
         {
             MachineName = Environment.MachineName,
-            Version = typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown"
+            Version = ProductVersion.FromAssembly(typeof(Program).Assembly)
         }));
 
         app.MapPost("/execute", (ExecuteRequest request) =>
