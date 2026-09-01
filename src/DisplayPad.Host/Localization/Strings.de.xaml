@@ -142,6 +142,7 @@
     <s:String x:Key="LblAutostartSection">Autostart</s:String>
     <s:String x:Key="CbAutostartText">DisplayPad Host beim Windows-Start automatisch starten</s:String>
     <s:String x:Key="LblLanguageSection">Sprache / Language</s:String>
+    <s:String x:Key="LblThemeSection">Design</s:String>
     <s:String x:Key="LblAboutSection">Über</s:String>
     <s:String x:Key="LblDeveloper">Entwickler</s:String>
     <s:String x:Key="LblVersionLabel">Version</s:String>
@@ -282,8 +283,11 @@ Danach führt das Pad keine alten Befehle mehr selbstständig aus. Fortfahren?</
     <s:String x:Key="ActionResult">{0}: {1}</s:String>
     <s:String x:Key="ActionResultSeparator">, </s:String>
     <s:String x:Key="MsgLanguageChanged">Sprache geändert.</s:String>
+    <s:String x:Key="MsgThemeChanged">Design geändert.</s:String>
     <s:String x:Key="LanguageGerman">Deutsch</s:String>
     <s:String x:Key="LanguageEnglish">Englisch</s:String>
+    <s:String x:Key="ThemeDark">Dunkel</s:String>
+    <s:String x:Key="ThemeLight">Hell</s:String>
     <s:String x:Key="CreatorName">ItzMayzTV</s:String>
     <s:String x:Key="DlgProfileExportFilter">DisplayPad-Profil (*.dpprofile)|*.dpprofile</s:String>
     <s:String x:Key="DlgProfileImportFilter">DisplayPad-Profil (*.dpprofile)|*.dpprofile|JSON (*.json)|*.json</s:String>
@@ -326,6 +330,7 @@ Danach führt das Pad keine alten Befehle mehr selbstständig aus. Fortfahren?</
     <s:String x:Key="ErrorConfigPortInvalid">Ports müssen zwischen 1 und 65535 liegen.</s:String>
     <s:String x:Key="ErrorConfigKeyMatrixInvalid">Die Tastenmatrix muss zwölf eindeutige Einträge enthalten.</s:String>
     <s:String x:Key="ErrorConfigLanguageInvalid">Die konfigurierte Sprache wird nicht unterstützt.</s:String>
+    <s:String x:Key="ErrorConfigThemeInvalid">Das konfigurierte Design wird nicht unterstützt.</s:String>
     <s:String x:Key="ErrorConfigNullProfile">Profile dürfen nicht null sein.</s:String>
     <s:String x:Key="ErrorConfigPageRequired">Jedes Profil benötigt mindestens eine Seite.</s:String>
     <s:String x:Key="ErrorConfigNullPage">Seiten dürfen nicht null sein.</s:String>

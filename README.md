@@ -13,12 +13,12 @@ Rechner A (DisplayPad)                        Rechner B (wird gesteuert)
 
 Voraussetzung (nur auf dem Entwicklungsrechner): .NET 8 SDK oder neuer.
 
-**Für die Weitergabe an andere Rechner:** `publish.cmd` ausführen — erzeugt self-contained Einzeldateien, die die .NET-Runtime mitbringen. Auf dem Zielrechner muss **kein** .NET installiert sein (behebt den Fehler „You must install .NET Desktop Runtime"):
+**Für einen vollständigen Release-Build:** `build.bat` ausführen. Der Ablauf leert ausschließlich den Ordner `build`, erzeugt self-contained Einzeldateien, signiert sie wie bei FPS Anzeige und meldet am Ende die vollständigen Ausgabepfade. Auf dem Zielrechner muss **kein** .NET installiert sein:
 
-- Agent für den Zweitrechner: `publish\Agent\DisplayPad.Agent.exe` (nur diese eine Datei rüberkopieren; Konfiguration, Zertifikat und rotierende Logs entstehen unter `%LocalAppData%\DisplayPadRemote\Agent`)
-- Host: `publish\Host\DisplayPad.Host.exe`
+- Host: `build\DisplayPad.Host.exe`
+- Agent für den Zweitrechner: `build\DisplayPad.Agent.exe` (Konfiguration, Zertifikat und rotierende Logs entstehen unter `%LocalAppData%\DisplayPadRemote\Agent`)
 
-Für die lokale Entwicklung reicht `dotnet build DisplayPadRemote.sln` (Ausgabe unter `src\...\bin\...`, benötigt installierte .NET-Runtime).
+Für die lokale Entwicklung reicht weiterhin `dotnet build DisplayPadRemote.sln`. Diese Entwicklerausgabe liegt unter `src\...\bin\...` und ist nicht zur Weitergabe gedacht.
 
 ## Einrichtung
 

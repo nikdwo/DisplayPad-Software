@@ -1,0 +1,21 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="ThemeWindowBackground" Color="#EEF2F5"/>
+    <SolidColorBrush x:Key="ThemeSurfaceBackground" Color="#F7F9FB"/>
+    <SolidColorBrush x:Key="ThemeHeaderBackground" Color="#E7EDF1"/>
+    <SolidColorBrush x:Key="ThemeCardBackground" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ThemeControlBackground" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ThemeBorderBrush" Color="#C9D1D9"/>
+    <SolidColorBrush x:Key="ThemeStrongBorderBrush" Color="#8795A1"/>
+    <SolidColorBrush x:Key="ThemeTextBrush" Color="#182027"/>
+    <SolidColorBrush x:Key="ThemeSoftTextBrush" Color="#202830"/>
+    <SolidColorBrush x:Key="ThemeMutedTextBrush" Color="#5B6670"/>
+    <SolidColorBrush x:Key="ThemeHoverBrush" Color="#E3E9ED"/>
+    <SolidColorBrush x:Key="ThemeSelectionBrush" Color="#BDEDF2"/>
+    <SolidColorBrush x:Key="ThemeArrowBrush" Color="#53616B"/>
+    <SolidColorBrush x:Key="ThemePressedBrush" Color="#A8E5EB"/>
+    <SolidColorBrush x:Key="ThemeTabHoverTextBrush" Color="#34424D"/>
+    <SolidColorBrush x:Key="ThemeSuccessBackground" Color="#E5F4E5"/>
+    <SolidColorBrush x:Key="ThemeSuccessBorder" Color="#8CC58C"/>
+    <SolidColorBrush x:Key="ThemeSuccessText" Color="#2F6F2F"/>
+</ResourceDictionary>

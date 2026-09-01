@@ -23,6 +23,8 @@ public static class ConfigValidator
         CheckLength(config.ObsHost, 128, nameof(config.ObsHost));
         if (config.Language is not ("de" or "en"))
             Fail(OperationErrorCode.ConfigLanguageInvalid);
+        if (config.Theme is not ("dark" or "light"))
+            Fail(OperationErrorCode.ConfigThemeInvalid);
 
         foreach (var profile in config.Profiles)
         {

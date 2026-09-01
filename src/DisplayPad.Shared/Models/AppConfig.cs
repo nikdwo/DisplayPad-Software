@@ -83,6 +83,9 @@ public class AppConfig
     /// <summary>UI-Sprache: "de" oder "en".</summary>
     public string Language { get; set; } = "de";
 
+    /// <summary>UI-Design: "dark" oder "light".</summary>
+    public string Theme { get; set; } = "dark";
+
     public List<ProfileConfig> Profiles { get; set; } = new();
     public int ActiveProfileIndex { get; set; } = 0;
 

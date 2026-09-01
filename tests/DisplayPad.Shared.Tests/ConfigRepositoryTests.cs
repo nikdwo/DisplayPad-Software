@@ -33,6 +33,16 @@ public sealed class ConfigRepositoryTests : IDisposable
     }
 
     [Fact]
+    public void InvalidThemeIsRejected()
+    {
+        var config = CreateConfig();
+        config.Theme = "neon";
+
+        var exception = Assert.Throws<ConfigValidationException>(() => ConfigValidator.Validate(config));
+        Assert.Equal(OperationErrorCode.ConfigThemeInvalid, exception.Result.ErrorCode);
+    }
+
+    [Fact]
     public void BackKeyActionInsideFolderIsRejected()
     {
         var config = CreateConfig();

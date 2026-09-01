@@ -36,6 +36,7 @@ public enum OperationErrorCode
     ConfigPortInvalid,
     ConfigKeyMatrixInvalid,
     ConfigLanguageInvalid,
+    ConfigThemeInvalid,
     ConfigNullProfile,
     ConfigPageRequired,
     ConfigNullPage,

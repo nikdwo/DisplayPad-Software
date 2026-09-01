@@ -2,16 +2,16 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="{DynamicResource DlgRemoteTitle}" Width="420" SizeToContent="Height"
-        Background="#141414" Foreground="#EBEBEB"
+        Background="{DynamicResource ThemeSurfaceBackground}" Foreground="{DynamicResource ThemeSoftTextBrush}"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False">
     <Window.Resources>
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#EBEBEB"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeSoftTextBrush}"/>
         </Style>
         <Style TargetType="TextBox">
-            <Setter Property="Background" Value="#1E1E1E"/>
-            <Setter Property="Foreground" Value="#EBEBEB"/>
-            <Setter Property="BorderBrush" Value="#2C2C2C"/>
+            <Setter Property="Background" Value="{DynamicResource ThemeControlBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeSoftTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="7,4"/>
             <Setter Property="CaretBrush" Value="#00D4E8"/>
@@ -37,9 +37,9 @@
             </Setter>
         </Style>
         <Style TargetType="Button">
-            <Setter Property="Background" Value="#1E1E1E"/>
-            <Setter Property="Foreground" Value="#EBEBEB"/>
-            <Setter Property="BorderBrush" Value="#2C2C2C"/>
+            <Setter Property="Background" Value="{DynamicResource ThemeControlBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeSoftTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="10,5"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -56,10 +56,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#282828"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ThemeHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#004D5A"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ThemePressedBrush}"/>
                                 <Setter TargetName="Bd" Property="BorderBrush" Value="#00D4E8"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
@@ -71,7 +71,7 @@
             </Setter>
         </Style>
     </Window.Resources>
-    <Border Background="#1C1C1C" CornerRadius="8" BorderBrush="#2C2C2C" BorderThickness="1" Margin="14">
+    <Border Background="{DynamicResource ThemeCardBackground}" CornerRadius="8" BorderBrush="{DynamicResource ThemeBorderBrush}" BorderThickness="1" Margin="14">
         <StackPanel Margin="14">
             <TextBlock Text="{DynamicResource LblRemoteHost}" Margin="0,0,0,3"/>
             <TextBox x:Name="HostBox" Margin="0,0,0,10"/>

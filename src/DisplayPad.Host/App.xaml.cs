@@ -12,6 +12,7 @@ public partial class App : Application
         try
         {
             var config = ConfigStore.Load(new HostConfigNameProvider());
+            AppTheme.Switch(config.Theme);
             Loc.Switch(config.Language);
             new MainWindow(config).Show();
         }

@@ -21,6 +21,16 @@ public sealed class LocalizationTests
     }
 
     [Fact]
+    public void DarkAndLightThemesHaveSameKeys()
+    {
+        var themes = Path.Combine(GetRepositoryRoot(), "src", "DisplayPad.Host", "Themes");
+        var dark = Read(Path.Combine(themes, "Dark.xaml"));
+        var light = Read(Path.Combine(themes, "Light.xaml"));
+
+        Assert.Equal(dark.Keys.Order(), light.Keys.Order());
+    }
+
+    [Fact]
     public void WpfViewsContainNoHardcodedAlphabeticVisibleText()
     {
         var host = Path.Combine(GetRepositoryRoot(), "src", "DisplayPad.Host");
@@ -53,6 +63,8 @@ public sealed class LocalizationTests
         var root = GetRepositoryRoot();
         var host = Path.Combine(root, "src", "DisplayPad.Host");
         var resources = Read(Path.Combine(host, "Localization", "Strings.de.xaml"));
+        foreach (var resource in Read(Path.Combine(host, "Themes", "Dark.xaml")))
+            resources.Add(resource.Key, resource.Value);
         var csharpKeys = Directory.EnumerateFiles(host, "*.cs", SearchOption.AllDirectories)
             .Where(file => !IsBuildOutput(file))
             .SelectMany(file => Regex.Matches(File.ReadAllText(file), "Loc\\.Get\\(\\\"([^\\\"]+)\\\"\\)")

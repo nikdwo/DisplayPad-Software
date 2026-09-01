@@ -1,9 +1,11 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using DisplayPad.Host.Services;
 using DisplayPad.Host.ViewModels;
 using DisplayPad.Shared.Models;
@@ -13,6 +15,8 @@ namespace DisplayPad.Host;
 
 public partial class MainWindow : Window
 {
+    private const int DwmwaUseImmersiveDarkMode = 20;
+
     private MainViewModel ViewModel => (MainViewModel)DataContext;
 
     private readonly WinForms.NotifyIcon _trayIcon;
@@ -53,7 +57,25 @@ public partial class MainWindow : Window
             else ShowFromTray();
         };
         Loc.LanguageChanged += UpdateProgrammaticTexts;
+        AppTheme.Changed += ApplyWindowTheme;
     }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        ApplyWindowTheme();
+    }
+
+    private void ApplyWindowTheme()
+    {
+        var handle = new WindowInteropHelper(this).Handle;
+        if (handle == IntPtr.Zero) return;
+        var enabled = AppTheme.IsDark ? 1 : 0;
+        _ = DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkMode, ref enabled, sizeof(int));
+    }
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr window, int attribute, ref int value, int size);
 
     private void UpdateProgrammaticTexts()
     {
@@ -92,10 +114,11 @@ public partial class MainWindow : Window
     {
         _isExiting = true;
         Loc.LanguageChanged -= UpdateProgrammaticTexts;
+        AppTheme.Changed -= ApplyWindowTheme;
         ViewModel.Dispose();
         _trayIcon.Visible = false;
         _trayIcon.Dispose();
-        Application.Current.Shutdown();
+        Environment.Exit(0);
     }
 
     protected override void OnClosing(CancelEventArgs e)

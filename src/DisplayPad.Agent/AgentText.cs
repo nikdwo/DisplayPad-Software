@@ -5,6 +5,9 @@ public static class AgentText
     private static readonly IReadOnlyDictionary<string, (string De, string En)> Values =
         new Dictionary<string, (string, string)>
         {
+            ["WindowTitle"] = ("DisplayPad Agent – Verbindungsdaten", "DisplayPad Agent – connection details"),
+            ["ShowWindow"] = ("Fenster anzeigen", "Show window"),
+            ["HideWindow"] = ("Ausblenden", "Hide"),
             ["CopyPairing"] = ("Verbindungsdaten kopieren", "Copy connection details"),
             ["RotateToken"] = ("Token rotieren", "Rotate token"),
             ["OpenLog"] = ("Log öffnen", "Open log"),

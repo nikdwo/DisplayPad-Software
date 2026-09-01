@@ -115,6 +115,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _language = "de";
 
+    [ObservableProperty]
+    private string _theme = "dark";
+
     private int _learnIndex;
     private readonly int[] _learnCodes = new int[AppConfig.KeyCount];
 
@@ -154,6 +157,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         ObsPort = _config.ObsPort;
         ObsPassword = _config.ObsPassword;
         _language = _config.Language;
+        _theme = _config.Theme;
         _obsService.Configure(ObsHost, ObsPort, ObsPassword);
 
         foreach (var profileConfig in _config.Profiles)
@@ -250,6 +254,18 @@ public partial class MainViewModel : ObservableObject, IDisposable
         _ = RefreshAgentStatusAsync();
         RefreshBaseCampStatus();
         _ = RefreshObsStatusAsync();
+    }
+
+    partial void OnThemeChanged(string value)
+    {
+        AppTheme.Switch(value);
+        _config.Theme = value;
+        try
+        {
+            ConfigStore.Save(_config, new HostConfigNameProvider());
+            StatusMessage = Loc.Get("MsgThemeChanged");
+        }
+        catch (Exception ex) { StatusMessage = OperationText.Format(OperationText.FromException(ex)); }
     }
 
     [RelayCommand]

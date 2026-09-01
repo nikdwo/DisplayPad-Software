@@ -142,6 +142,7 @@
     <s:String x:Key="LblAutostartSection">Autostart</s:String>
     <s:String x:Key="CbAutostartText">Start DisplayPad Host automatically with Windows</s:String>
     <s:String x:Key="LblLanguageSection">Sprache / Language</s:String>
+    <s:String x:Key="LblThemeSection">Theme</s:String>
     <s:String x:Key="LblAboutSection">About</s:String>
     <s:String x:Key="LblDeveloper">Developer</s:String>
     <s:String x:Key="LblVersionLabel">Version</s:String>
@@ -282,8 +283,11 @@ Afterwards the pad will no longer execute old commands on its own. Continue?</s:
     <s:String x:Key="ActionResult">{0}: {1}</s:String>
     <s:String x:Key="ActionResultSeparator">, </s:String>
     <s:String x:Key="MsgLanguageChanged">Language changed.</s:String>
+    <s:String x:Key="MsgThemeChanged">Theme changed.</s:String>
     <s:String x:Key="LanguageGerman">German</s:String>
     <s:String x:Key="LanguageEnglish">English</s:String>
+    <s:String x:Key="ThemeDark">Dark</s:String>
+    <s:String x:Key="ThemeLight">Light</s:String>
     <s:String x:Key="CreatorName">ItzMayzTV</s:String>
     <s:String x:Key="DlgProfileExportFilter">DisplayPad profile (*.dpprofile)|*.dpprofile</s:String>
     <s:String x:Key="DlgProfileImportFilter">DisplayPad profile (*.dpprofile)|*.dpprofile|JSON (*.json)|*.json</s:String>
@@ -326,6 +330,7 @@ Afterwards the pad will no longer execute old commands on its own. Continue?</s:
     <s:String x:Key="ErrorConfigPortInvalid">Ports must be between 1 and 65535.</s:String>
     <s:String x:Key="ErrorConfigKeyMatrixInvalid">The key matrix must contain twelve unique entries.</s:String>
     <s:String x:Key="ErrorConfigLanguageInvalid">The configured language is not supported.</s:String>
+    <s:String x:Key="ErrorConfigThemeInvalid">The configured theme is not supported.</s:String>
     <s:String x:Key="ErrorConfigNullProfile">Profiles must not be null.</s:String>
     <s:String x:Key="ErrorConfigPageRequired">Every profile needs at least one page.</s:String>
     <s:String x:Key="ErrorConfigNullPage">Pages must not be null.</s:String>

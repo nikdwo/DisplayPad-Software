@@ -226,9 +226,12 @@ public sealed class FailedAuthenticationLimiter
 internal sealed class TrayAppContext : ApplicationContext
 {
     private readonly NotifyIcon _trayIcon;
+    private readonly Form _window;
+    private readonly TextBox _tokenBox;
     private readonly AgentConfig _config;
     private readonly WebApplication _app;
     private readonly string _fingerprint;
+    private bool _isExiting;
 
     public TrayAppContext(AgentConfig config, string fingerprint, WebApplication app)
     {
@@ -236,9 +239,12 @@ internal sealed class TrayAppContext : ApplicationContext
         _fingerprint = fingerprint;
         _app = app;
 
+        (_window, _tokenBox) = CreateWindow();
+
         var menu = new ContextMenuStrip();
         menu.Items.Add($"DisplayPad Agent – HTTPS {config.Port}").Enabled = false;
         menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(AgentText.Get(config.Language, "ShowWindow"), null, (_, _) => ShowWindow());
         menu.Items.Add(AgentText.Get(config.Language, "CopyPairing"), null, (_, _) => CopyPairingData());
         menu.Items.Add(AgentText.Get(config.Language, "RotateToken"), null, (_, _) => RotateToken());
         menu.Items.Add(AgentText.Get(config.Language, "OpenLog"), null, (_, _) => OpenLog());
@@ -252,8 +258,110 @@ internal sealed class TrayAppContext : ApplicationContext
             ContextMenuStrip = menu,
             Visible = true
         };
+        _trayIcon.DoubleClick += (_, _) => ShowWindow();
         _trayIcon.ShowBalloonTip(3000, "DisplayPad Agent",
             string.Format(AgentText.Get(config.Language, "Running"), Environment.MachineName, config.Port), ToolTipIcon.Info);
+        ShowWindow();
+    }
+
+    private (Form Window, TextBox TokenBox) CreateWindow()
+    {
+        var window = new Form
+        {
+            Text = AgentText.Get(_config.Language, "WindowTitle"),
+            Icon = System.Drawing.SystemIcons.Application,
+            StartPosition = FormStartPosition.CenterScreen,
+            MinimumSize = new System.Drawing.Size(620, 220),
+            ClientSize = new System.Drawing.Size(720, 220),
+            MaximizeBox = false
+        };
+        window.FormClosing += (_, eventArgs) =>
+        {
+            if (_isExiting) return;
+            eventArgs.Cancel = true;
+            window.Hide();
+        };
+
+        var layout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            Padding = new Padding(12),
+            ColumnCount = 2,
+            RowCount = 4
+        };
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+        TextBox AddField(int row, string textKey, string value)
+        {
+            var label = AgentText.Get(_config.Language, textKey);
+            layout.Controls.Add(new Label
+            {
+                Text = label,
+                AutoSize = true,
+                Anchor = AnchorStyles.Left,
+                Margin = new Padding(0, 6, 12, 6)
+            }, 0, row);
+            var field = new TextBox
+            {
+                Text = value,
+                ReadOnly = true,
+                Dock = DockStyle.Fill,
+                AccessibleName = label,
+                Margin = new Padding(0, 3, 0, 3)
+            };
+            layout.Controls.Add(field, 1, row);
+            return field;
+        }
+
+        AddField(0, "PairingAddress", $"{Environment.MachineName}:{_config.Port}");
+        var tokenBox = AddField(1, "PairingToken", _config.Token);
+        AddField(2, "PairingFingerprint", _fingerprint);
+
+        var buttons = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Margin = new Padding(0, 12, 0, 0)
+        };
+        buttons.Controls.Add(new Button
+        {
+            Text = AgentText.Get(_config.Language, "CopyPairing"),
+            AutoSize = true
+        });
+        buttons.Controls[^1].Click += (_, _) => CopyPairingData();
+        buttons.Controls.Add(new Button
+        {
+            Text = AgentText.Get(_config.Language, "RotateToken"),
+            AutoSize = true
+        });
+        buttons.Controls[^1].Click += (_, _) => RotateToken();
+        buttons.Controls.Add(new Button
+        {
+            Text = AgentText.Get(_config.Language, "OpenLog"),
+            AutoSize = true
+        });
+        buttons.Controls[^1].Click += (_, _) => OpenLog();
+        buttons.Controls.Add(new Button
+        {
+            Text = AgentText.Get(_config.Language, "HideWindow"),
+            AutoSize = true
+        });
+        buttons.Controls[^1].Click += (_, _) => window.Hide();
+        layout.Controls.Add(buttons, 0, 3);
+        layout.SetColumnSpan(buttons, 2);
+        window.Controls.Add(layout);
+        return (window, tokenBox);
+    }
+
+    private void ShowWindow()
+    {
+        _window.Show();
+        if (_window.WindowState == FormWindowState.Minimized)
+            _window.WindowState = FormWindowState.Normal;
+        _window.Activate();
     }
 
     private void CopyPairingData()
@@ -268,6 +376,7 @@ internal sealed class TrayAppContext : ApplicationContext
     private void RotateToken()
     {
         AgentConfig.RotateToken(_config);
+        _tokenBox.Text = _config.Token;
         Clipboard.SetText(_config.Token);
         _trayIcon.ShowBalloonTip(3000, "DisplayPad Agent", AgentText.Get(_config.Language, "TokenRotated"), ToolTipIcon.Warning);
     }
@@ -280,6 +389,8 @@ internal sealed class TrayAppContext : ApplicationContext
 
     private void ExitApp()
     {
+        _isExiting = true;
+        _window.Close();
         _trayIcon.Visible = false;
         try
         {
@@ -292,7 +403,11 @@ internal sealed class TrayAppContext : ApplicationContext
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) _trayIcon.Dispose();
+        if (disposing)
+        {
+            _window.Dispose();
+            _trayIcon.Dispose();
+        }
         base.Dispose(disposing);
     }
 }

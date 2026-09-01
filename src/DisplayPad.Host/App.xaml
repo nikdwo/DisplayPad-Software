@@ -5,6 +5,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Themes/Dark.xaml"/>
                 <ResourceDictionary Source="pack://application:,,,/Localization/Strings.de.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
