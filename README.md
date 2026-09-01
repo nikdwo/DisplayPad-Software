@@ -88,3 +88,5 @@ Manuell per PowerShell (Admin): `Stop-Service BaseCampService; Set-Service BaseC
 ## Tests und Release
 
 `dotnet test DisplayPadRemote.sln -c Release` führt Shared-, Host- und Agent-Tests aus. Die Windows-CI prüft zusätzlich Release-Build, Lokalisierung, bekannte NuGet-Schwachstellen und beide self-contained Publish-Ausgaben. Die manuellen Release-Gates und Hardwarematrix stehen in [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md); langfristige Vorhaben in [`docs/BACKLOG.md`](docs/BACKLOG.md).
+
+Die Produktversion steht ausschließlich in `src/Directory.Build.props`. `testing` behält beim Entwickeln die aktuelle Version; Binärmetadaten enthalten zusätzlich den Git-Commit. Für eine Veröffentlichung wird `testing` nach `main` gemergt, die Version einmal auf `main` erhöht und genau dieser geprüfte Commit mit `v<Version>` getaggt. Anschließend wird `testing` per Fast-Forward wieder auf `main` gebracht. Konfigurationsversionen bleiben davon unabhängig und werden nur bei Änderungen des gespeicherten Datenformats erhöht.

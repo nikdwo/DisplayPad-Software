@@ -6,9 +6,14 @@ namespace DisplayPad.Shared.Tests;
 public sealed class ProductVersionTests
 {
     [Fact]
-    public void ProductionAssemblyUsesAlphaOneVersion()
+    public void ProductAndAssemblyVersionsAreConsistent()
     {
-        Assert.Equal("0.1.0-alpha.1", ProductVersion.FromAssembly(typeof(AppConfig).Assembly));
-        Assert.Equal(new Version(0, 1, 0, 0), typeof(AppConfig).Assembly.GetName().Version);
+        var assembly = typeof(AppConfig).Assembly;
+        var productVersion = ProductVersion.FromAssembly(assembly);
+        var semanticCore = Version.Parse(productVersion.Split('-', 2)[0]);
+
+        Assert.Matches(@"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$", productVersion);
+        Assert.Equal(new Version(semanticCore.Major, semanticCore.Minor, semanticCore.Build, 0),
+            assembly.GetName().Version);
     }
 }
