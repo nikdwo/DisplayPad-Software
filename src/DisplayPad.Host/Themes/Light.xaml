@@ -11,11 +11,13 @@
     <SolidColorBrush x:Key="ThemeSoftTextBrush" Color="#202830"/>
     <SolidColorBrush x:Key="ThemeMutedTextBrush" Color="#5B6670"/>
     <SolidColorBrush x:Key="ThemeHoverBrush" Color="#E3E9ED"/>
-    <SolidColorBrush x:Key="ThemeSelectionBrush" Color="#BDEDF2"/>
+    <SolidColorBrush x:Key="ThemeSelectionBrush" Color="#F5EAC6"/>
     <SolidColorBrush x:Key="ThemeArrowBrush" Color="#53616B"/>
     <SolidColorBrush x:Key="ThemePressedBrush" Color="#A8E5EB"/>
     <SolidColorBrush x:Key="ThemeTabHoverTextBrush" Color="#34424D"/>
     <SolidColorBrush x:Key="ThemeSuccessBackground" Color="#E5F4E5"/>
     <SolidColorBrush x:Key="ThemeSuccessBorder" Color="#8CC58C"/>
     <SolidColorBrush x:Key="ThemeSuccessText" Color="#2F6F2F"/>
+    <SolidColorBrush x:Key="ThemeAccentBrush" Color="#805D00"/>
+    <SolidColorBrush x:Key="ThemeAccentTextBrush" Color="#FFFFFF"/>
 </ResourceDictionary>

@@ -32,17 +32,21 @@ Für die lokale Entwicklung reicht weiterhin `dotnet build DisplayPadRemote.sln`
 **Auf Rechner A (DisplayPad angeschlossen):**
 1. Base Camp beenden (kann sonst mit dem SDK um das Gerät konkurrieren).
 2. `DisplayPad.Host.exe` starten.
-3. Oben auf **„Remote"** klicken und IP/Name, Port 5599, Token und den vollständigen SHA-256-Fingerabdruck eintragen. Der Host akzeptiert das Zertifikat nur bei exakter Übereinstimmung.
+3. Links **„Dienste"** öffnen und die Remote-Einstellungen wählen. IP/Name, Port 5599, Token und den vollständigen SHA-256-Fingerabdruck eintragen. Der Host akzeptiert das Zertifikat nur bei exakter Übereinstimmung.
 4. Taste im Raster anklicken → Beschriftung, Icon und Aktion festlegen:
    - **Hotkey:** ins Eingabefeld klicken und die Kombination drücken (z.B. `Ctrl+Alt+F1`). Medien-Tasten wie `MediaPlayPause`, `VolumeUp` können auch von Hand eingetragen werden.
    - **Befehl:** wird via `cmd /c` ausgeführt, z.B. `start "" "C:\Program Files\obs-studio\bin\64bit\obs64.exe"`.
    - **Ausführen auf:** Zweitrechner, Hauptrechner (dieser PC) oder Beiden. Für rein lokale Tasten ist kein Agent nötig.
    - **Seite wechseln:** schaltet zur nächsten/vorherigen/einer bestimmten Seite (mit Wrap-around).
-5. **Seiten:** Über dem Raster Seiten anlegen („+"), umbenennen und löschen („–"). Das Raster zeigt immer die aktive Seite. Wird eine Seitenwechsel-Taste am Pad gedrückt, überträgt die App automatisch die Icons der neuen Seite aufs Pad.
+5. **Seiten:** Unter „Tastenbelegung" in der Seitenleiste neben dem Raster auswählen. Darunter lassen sich Seiten anlegen („+"), umbenennen, löschen („–"), kopieren und importieren/exportieren. Das Raster zeigt immer die aktive Seite bzw. den geöffneten Ordner. Wird eine Seitenwechsel-Taste am Pad gedrückt, überträgt die App automatisch die Icons der neuen Seite aufs Pad.
 6. „Aktion jetzt testen" führt die Aktion des ausgewählten Eintrags sofort aus.
 7. „Speichern" schreibt die Konfiguration, „Auf Gerät übertragen" rendert Icons + Beschriftungen der aktiven Seite und lädt sie auf die Pad-Tasten (alle 12, leere Tasten werden schwarz).
 
 Host-Konfiguration: `%AppData%\DisplayPadRemote\config.json`. Agent-Konfiguration, Zertifikat und Logs: `%LocalAppData%\DisplayPadRemote\Agent`. Agent-Token und OBS-Passwort werden mit Windows DPAPI für den aktuellen Benutzer geschützt gespeichert.
+
+## Oberfläche
+
+Der Aufbau orientiert sich an der [offiziellen DisplayPad-Ansicht von MOUNTAIN Base Camp](https://mountain.gg/start/keybindings-displaypad): Navigation links, Seiten daneben, Geräteansicht rechts und Tasteneditor darunter. „Profile" enthält Profilverwaltung und Import/Export; das aktive Profil lässt sich auch oben rechts wechseln. „Dienste" bündelt Remote, OBS und Base Camp. „Einstellungen" enthält Gerätezuordnung, Zurücksetzen der alten Belegung, Autostart, Sprache und Design. Speichern und Übertragen sind in der Fußleiste erreichbar.
 
 ## Feintuning (config.json)
 
@@ -54,7 +58,7 @@ Host-Konfiguration: `%AppData%\DisplayPadRemote\config.json`. Agent-Konfiguratio
 Tasten können OBS direkt steuern (Szene wechseln, Stream/Aufnahme starten/stoppen/umschalten, Quelle stummschalten) — ohne Hotkey-Umweg, über das OBS-WebSocket-Protokoll v5:
 
 1. Voraussetzung: OBS 28 oder neuer. In OBS unter **Werkzeuge → WebSocket-Servereinstellungen** den Server aktivieren (Standard-Port 4455, Passwort optional).
-2. In der Host-App oben auf **„OBS"** klicken, Host/Port/Passwort eintragen, „Verbindung testen", speichern. OBS kann auf dem Hauptrechner (`127.0.0.1`) oder dem Zweitrechner (dessen IP) laufen.
+2. In der Host-App unter **„Dienste" → OBS-Einstellungen** Host/Port/Passwort eintragen, „Verbindung testen", speichern. OBS kann auf dem Hauptrechner (`127.0.0.1`) oder dem Zweitrechner (dessen IP) laufen.
 3. Bei einer Taste als Aktion **„OBS steuern"** wählen und den Befehl festlegen. Szenen- und Quellennamen werden bei bestehender Verbindung automatisch aus OBS in die Auswahl geladen (Freitext geht auch).
 
 ## NVIDIA-Overlay-Aktionen
@@ -65,9 +69,9 @@ Der Aktionstyp **„NVIDIA Overlay"** löst Funktionen wie Instant Replay speich
 
 Das Pad führt seine Belegung **aus dem eigenen Flash-Speicher** aus — alte Base-Camp-Makros laufen also auch ohne Base Camp weiter. Zusätzlich startet der Windows-Dienst `BaseCampService` die Base-Camp-Prozesse (`BaseCamp.Service.exe`, `MountainDisplayPadWorker.exe`) automatisch neu, wenn man sie nur beendet.
 
-Lösung in der Host-App (Kopfbereich „Base Camp"):
-1. **„Base Camp deaktivieren"**: stoppt den Dienst und stellt den Starttyp auf „Deaktiviert" (Admin-Prompt). Der Statuspunkt zeigt Orange bei Konflikt, Grün wenn Ruhe ist. **„Base Camp aktivieren"** macht alles rückgängig.
-2. **„Alte Belegung löschen…"** (unten): setzt die im Pad gespeicherte Tastenbelegung auf Werksstandard zurück und löscht die alten Tastenbilder — danach führt das Pad keine Base-Camp-Makros mehr selbst aus.
+Lösung in der Host-App:
+1. **„Dienste" → „Base Camp deaktivieren"**: stoppt den Dienst und stellt den Starttyp auf „Deaktiviert" (Admin-Prompt). Der Statuspunkt zeigt Orange bei Konflikt, Grün wenn Ruhe ist. **„Base Camp aktivieren"** macht alles rückgängig.
+2. **„Einstellungen" → „Alte Belegung löschen…"**: setzt die im Pad gespeicherte Tastenbelegung auf Werksstandard zurück und löscht die alten Tastenbilder — danach führt das Pad keine Base-Camp-Makros mehr selbst aus.
 3. Zusätzlich übernimmt die App beim Verbinden automatisch die Software-Kontrolle über das Pad (SDK `APEnable`; abschaltbar über `AutoApEnable` in der config.json).
 
 Manuell per PowerShell (Admin): `Stop-Service BaseCampService; Set-Service BaseCampService -StartupType Disabled` bzw. zurück mit `Set-Service BaseCampService -StartupType Automatic; Start-Service BaseCampService`.

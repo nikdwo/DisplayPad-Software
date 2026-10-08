@@ -7,8 +7,8 @@
         xmlns:models="clr-namespace:DisplayPad.Shared.Models;assembly=DisplayPad.Shared"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
-        Title="{DynamicResource AppTitle}" Height="720" Width="1100"
-        MinHeight="640" MinWidth="980" ResizeMode="CanResize"
+        Title="{DynamicResource AppTitle}" Height="820" Width="1280"
+        MinHeight="700" MinWidth="1100" ResizeMode="CanResize"
         Background="{DynamicResource ThemeWindowBackground}" Foreground="{DynamicResource ThemeTextBrush}"
         FontFamily="Segoe UI" FontSize="13"
         WindowStartupLocation="CenterScreen">
@@ -25,8 +25,8 @@
             <Setter Property="Padding" Value="8,2"/>
             <Setter Property="MinHeight" Value="30"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="CaretBrush" Value="#00D4E8"/>
-            <Setter Property="SelectionBrush" Value="#00D4E8"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource ThemeAccentBrush}"/>
+            <Setter Property="SelectionBrush" Value="{DynamicResource ThemeAccentBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -40,7 +40,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#00D4E8"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource ThemeAccentBrush}"/>
                             </Trigger>
                             <Trigger Property="IsReadOnly" Value="True">
                                 <Setter TargetName="Bd" Property="Opacity" Value="0.6"/>
@@ -76,7 +76,7 @@
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ThemePressedBrush}"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#00D4E8"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource ThemeAccentBrush}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="Bd" Property="Opacity" Value="0.35"/>
@@ -170,7 +170,7 @@
                                 <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource ThemeStrongBorderBrush}"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                <Setter TargetName="Border" Property="BorderBrush" Value="#00D4E8"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource ThemeAccentBrush}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="Border" Property="Opacity" Value="0.45"/>
@@ -224,7 +224,7 @@
                                     <Border x:Name="Box" Background="{DynamicResource ThemeControlBackground}" BorderBrush="{DynamicResource ThemeStrongBorderBrush}"
                                             BorderThickness="1" CornerRadius="4"/>
                                     <Path x:Name="Check" Data="M 4 9 L 8 13 L 15 5"
-                                          Stroke="#071417" StrokeThickness="2.2"
+                                          Stroke="{DynamicResource ThemeAccentTextBrush}" StrokeThickness="2.2"
                                           StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                           Visibility="Collapsed"/>
                                 </Grid>
@@ -234,12 +234,12 @@
                         </BulletDecorator>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Box" Property="Background" Value="#00D4E8"/>
-                                <Setter TargetName="Box" Property="BorderBrush" Value="#00D4E8"/>
+                                <Setter TargetName="Box" Property="Background" Value="{DynamicResource ThemeAccentBrush}"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource ThemeAccentBrush}"/>
                                 <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Box" Property="BorderBrush" Value="#00D4E8"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource ThemeAccentBrush}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.4"/>
@@ -249,23 +249,57 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeTextBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        </Style>
+        <Style TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Item" Background="Transparent" BorderBrush="Transparent" BorderThickness="3,0,0,0" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Item" Property="Background" Value="{DynamicResource ThemeHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Item" Property="Background" Value="{DynamicResource ThemeSelectionBrush}"/>
+                                <Setter TargetName="Item" Property="BorderBrush" Value="{DynamicResource ThemeAccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style TargetType="TabControl">
-            <Setter Property="Background" Value="{DynamicResource ThemeSurfaceBackground}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource ThemeBorderBrush}"/>
+            <Setter Property="TabStripPlacement" Value="Left"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabControl">
                         <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Border Grid.Row="0" Background="{DynamicResource ThemeHeaderBackground}"
-                                    BorderBrush="{DynamicResource ThemeBorderBrush}" BorderThickness="0,0,0,1">
-                                <TabPanel IsItemsHost="True" Margin="6,6,0,0" Background="Transparent"/>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="164"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Background="{DynamicResource ThemeHeaderBackground}" BorderBrush="{DynamicResource ThemeBorderBrush}" BorderThickness="0,0,1,0">
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Bottom" Margin="20,12,16,20">
+                                        <TextBlock Text="{DynamicResource AppTitle}" FontSize="11" Foreground="{DynamicResource ThemeMutedTextBrush}"/>
+                                        <TextBlock Text="{Binding AppVersion}" FontSize="11" Foreground="{DynamicResource ThemeMutedTextBrush}" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel IsItemsHost="True" VerticalAlignment="Top" Margin="0,20,0,0" KeyboardNavigation.TabNavigation="Once"/>
+                                </DockPanel>
                             </Border>
-                            <Border Grid.Row="1" Background="{DynamicResource ThemeSurfaceBackground}">
-                                <ContentPresenter ContentSource="SelectedContent"/>
+                            <Border Grid.Column="1" Background="{DynamicResource ThemeSurfaceBackground}">
+                                <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
                             </Border>
                         </Grid>
                     </ControlTemplate>
@@ -273,42 +307,24 @@
             </Setter>
         </Style>
         <Style TargetType="TabItem">
-            <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource ThemeMutedTextBrush}"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Padding" Value="18,10"/>
+            <Setter Property="Padding" Value="20,20"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
-                        <Grid>
-                            <Border x:Name="Border"
-                                    Background="{TemplateBinding Background}"
-                                    CornerRadius="5,5,0,0"
-                                    Padding="{TemplateBinding Padding}"
-                                    Margin="0,0,2,0">
-                                <ContentPresenter x:Name="Content"
-                                                  ContentSource="Header"
-                                                  TextElement.Foreground="{TemplateBinding Foreground}"/>
-                            </Border>
-                            <Border x:Name="Indicator" Height="2"
-                                    Background="Transparent"
-                                    VerticalAlignment="Bottom"/>
-                        </Grid>
+                        <Border x:Name="NavigationItem" Background="Transparent" BorderBrush="Transparent" BorderThickness="3,0,0,0" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="NavigationText" ContentSource="Header" TextElement.Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ThemeSurfaceBackground}"/>
-                                <Setter TargetName="Indicator" Property="Background" Value="#00D4E8"/>
-                                <Setter TargetName="Content" Property="TextElement.Foreground" Value="{DynamicResource ThemeSoftTextBrush}"/>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="NavigationItem" Property="Background" Value="{DynamicResource ThemeHoverBrush}"/>
                             </Trigger>
-                            <MultiTrigger>
-                                <MultiTrigger.Conditions>
-                                    <Condition Property="IsMouseOver" Value="True"/>
-                                    <Condition Property="IsSelected" Value="False"/>
-                                </MultiTrigger.Conditions>
-                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ThemeHoverBrush}"/>
-                                <Setter TargetName="Content" Property="TextElement.Foreground" Value="{DynamicResource ThemeTabHoverTextBrush}"/>
-                            </MultiTrigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="NavigationItem" Property="Background" Value="{DynamicResource ThemeSurfaceBackground}"/>
+                                <Setter TargetName="NavigationItem" Property="BorderBrush" Value="{DynamicResource ThemeAccentBrush}"/>
+                                <Setter TargetName="NavigationText" Property="TextElement.Foreground" Value="{DynamicResource ThemeTextBrush}"/>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -316,89 +332,128 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="16">
+    <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="68"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-
-        <TabControl Grid.Row="0" Margin="0,0,0,14">
-
-            <!-- ═══════════════════════════════════════════ Tab 1: DisplayPad ═══════ -->
-            <TabItem Header="{DynamicResource TabDisplayPad}">
-                <Grid Margin="10">
+        <Border Background="{DynamicResource ThemeHeaderBackground}" BorderBrush="{DynamicResource ThemeBorderBrush}" BorderThickness="0,0,0,1" Padding="24,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="4" Height="28" Background="{DynamicResource ThemeAccentBrush}" Margin="0,0,14,0"/>
+                    <TextBlock Text="{DynamicResource TabDisplayPad}" FontSize="23" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding DeviceStatusText}" Margin="22,0,12,0" VerticalAlignment="Center" Foreground="{DynamicResource ThemeMutedTextBrush}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{DynamicResource LblProfile}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <ComboBox x:Name="ActiveProfilePicker" Width="210" ItemsSource="{Binding Profiles}" SelectedItem="{Binding ActiveProfile}"
+                              DisplayMemberPath="Name" ToolTip="{DynamicResource TtpProfileName}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <TabControl x:Name="WorkspaceTabs" Grid.Row="1" SelectedIndex="1">
+            <TabItem Header="{DynamicResource TabProfiles}">
+                <Grid Margin="24">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Margin="0,0,0,24">
+                        <TextBlock Text="{DynamicResource TabProfiles}" FontSize="24" FontWeight="SemiBold"/>
+                        <TextBlock Text="{DynamicResource LblProfilesHint}" Margin="0,8,0,0" Foreground="{DynamicResource ThemeMutedTextBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="280"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <DockPanel Margin="0,0,24,0">
+                            <Button DockPanel.Dock="Bottom" Content="{DynamicResource TtpAddProfile}" Command="{Binding AddProfileCommand}" Margin="0,12,0,0"/>
+                            <ListBox x:Name="ProfileList" ItemsSource="{Binding Profiles}" SelectedItem="{Binding ActiveProfile}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" FontSize="16" TextTrimming="CharacterEllipsis"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                <TextBlock Text="{DynamicResource LblPages}" Foreground="{DynamicResource ThemeMutedTextBrush}" Margin="0,0,8,0"/>
+                                                <TextBlock Text="{Binding Pages.Count}" Foreground="{DynamicResource ThemeMutedTextBrush}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DockPanel>
+                        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel MaxWidth="560" HorizontalAlignment="Left">
+                                <TextBlock Text="{DynamicResource TtpProfileName}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <TextBox x:Name="ProfileNameBox" Text="{Binding ActiveProfile.Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,20"/>
+                                <WrapPanel>
+                                    <Button Content="{DynamicResource TtpDuplicateProfile}" Command="{Binding DuplicateProfileCommand}" Margin="0,0,8,8"/>
+                                    <Button Content="{DynamicResource TtpRemoveProfile}" Command="{Binding RemoveProfileCommand}" Margin="0,0,0,8"/>
+                                </WrapPanel>
+                                <Border Height="1" Background="{DynamicResource ThemeBorderBrush}" Margin="0,16,0,24"/>
+                                <WrapPanel>
+                                    <Button Content="{DynamicResource TtpImportProfile}" Command="{Binding ImportProfileCommand}" Margin="0,0,8,8"/>
+                                    <Button Content="{DynamicResource TtpExportProfile}" Command="{Binding ExportProfileCommand}" Margin="0,0,0,8"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="{DynamicResource TabKeyBindings}">
+                <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="188"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="370"/>
                     </Grid.ColumnDefinitions>
-
-                    <!-- Tastenraster 6x2 -->
-                    <Border Grid.Column="0" Background="{DynamicResource ThemeCardBackground}" CornerRadius="10" BorderBrush="{DynamicResource ThemeBorderBrush}" BorderThickness="1" Padding="18" Margin="0,0,12,0">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <Border Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeBorderBrush}" BorderThickness="0,0,1,0" Padding="14,22,14,16">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Top">
+                                <TextBlock Text="{DynamicResource LblPages}" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="{Binding PageIndicator}" Margin="0,6,0,18" Foreground="{DynamicResource ThemeMutedTextBrush}"/>
+                            </StackPanel>
+                            <StackPanel DockPanel.Dock="Bottom" Margin="0,16,0,0">
+                                <TextBlock Text="{DynamicResource TtpPageName}" Margin="0,0,0,6" TextWrapping="Wrap"/>
+                                <TextBox Text="{Binding ActivePage.Name, UpdateSourceTrigger=PropertyChanged}" ToolTip="{DynamicResource TtpPageName}" Margin="0,0,0,8"/>
+                                <UniformGrid Columns="5">
+                                    <Button Content="+" Command="{Binding AddPageCommand}" ToolTip="{DynamicResource TtpAddPage}" AutomationProperties.Name="{DynamicResource TtpAddPage}" Padding="0" Margin="0,0,3,0"/>
+                                    <Button Content="−" Command="{Binding RemovePageCommand}" ToolTip="{DynamicResource TtpRemovePage}" AutomationProperties.Name="{DynamicResource TtpRemovePage}" Padding="0" Margin="0,0,3,0"/>
+                                    <Button Content="→" Click="CopyPageToProfileButton_Click" ToolTip="{DynamicResource TtpCopyPageToProfile}" AutomationProperties.Name="{DynamicResource TtpCopyPageToProfile}" Padding="0" Margin="0,0,3,0"/>
+                                    <Button Content="↑" Command="{Binding ExportPageCommand}" ToolTip="{DynamicResource TtpExportPage}" AutomationProperties.Name="{DynamicResource TtpExportPage}" Padding="0" Margin="0,0,3,0"/>
+                                    <Button Content="↓" Command="{Binding ImportPageCommand}" ToolTip="{DynamicResource TtpImportPage}" AutomationProperties.Name="{DynamicResource TtpImportPage}" Padding="0"/>
+                                </UniformGrid>
+                            </StackPanel>
+                            <ListBox x:Name="PageList" ItemsSource="{Binding Pages}" SelectedItem="{Binding ActivePage}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DockPanel>
+                    </Border>
+                    <Grid Grid.Column="1" Margin="24,20,24,16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" MaxHeight="340"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
                             <StackPanel>
-                                <!-- Profil-Zeile -->
-                                <DockPanel Margin="2,0,0,8">
-                                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
-                                        <Ellipse Width="7" Height="7" Fill="#00D4E8" VerticalAlignment="Center" Margin="0,0,7,0"/>
-                                        <TextBlock Text="{DynamicResource LblProfile}" FontWeight="Bold" FontSize="14"/>
-                                    </StackPanel>
-                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-                                        <ComboBox Width="130" ItemsSource="{Binding Profiles}"
-                                                  SelectedItem="{Binding ActiveProfile}" Margin="0,0,6,0">
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Name}"/>
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
-                                        <TextBox Width="110" Text="{Binding ActiveProfile.Name, UpdateSourceTrigger=PropertyChanged}"
-                                                 ToolTip="{DynamicResource TtpProfileName}" Margin="0,0,6,0"/>
-                                        <Button Content="+" Command="{Binding AddProfileCommand}" Padding="9,5"
-                                                Margin="0,0,4,0" ToolTip="{DynamicResource TtpAddProfile}"/>
-                                        <Button Content="⧉" Command="{Binding DuplicateProfileCommand}" Padding="9,5"
-                                                Margin="0,0,4,0" ToolTip="{DynamicResource TtpDuplicateProfile}"/>
-                                        <Button Content="–" Command="{Binding RemoveProfileCommand}" Padding="9,5"
-                                                Margin="0,0,6,0" ToolTip="{DynamicResource TtpRemoveProfile}"/>
-                                        <Button Content="↑" Command="{Binding ExportProfileCommand}" Padding="9,5"
-                                                Margin="0,0,4,0" ToolTip="{DynamicResource TtpExportProfile}"/>
-                                        <Button Content="↓" Command="{Binding ImportProfileCommand}" Padding="9,5"
-                                                ToolTip="{DynamicResource TtpImportProfile}"/>
-                                    </StackPanel>
-                                </DockPanel>
-
-                                <!-- Seiten-Zeile -->
-                                <DockPanel Margin="2,0,0,12">
-                                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Ellipse Width="7" Height="7" Fill="#00D4E8" VerticalAlignment="Center" Margin="0,0,7,0"/>
-                                        <TextBlock Text="{DynamicResource LblKeys}" FontWeight="Bold" FontSize="14"/>
-                                    </StackPanel>
-                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding PageIndicator}" VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource ThemeMutedTextBrush}" Margin="0,0,10,0"/>
-                                        <ComboBox Width="130" ItemsSource="{Binding Pages}"
-                                                  SelectedItem="{Binding ActivePage}" Margin="0,0,6,0">
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Name}"/>
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
-                                        <TextBox Width="110" Text="{Binding ActivePage.Name, UpdateSourceTrigger=PropertyChanged}"
-                                                 ToolTip="{DynamicResource TtpPageName}" Margin="0,0,6,0"/>
-                                        <Button Content="+" Command="{Binding AddPageCommand}" Padding="9,5"
-                                                Margin="0,0,4,0" ToolTip="{DynamicResource TtpAddPage}"/>
-                                        <Button Content="–" Command="{Binding RemovePageCommand}" Padding="9,5"
-                                                Margin="0,0,4,0" ToolTip="{DynamicResource TtpRemovePage}"/>
-                                        <Button Content="→" Padding="9,5" Margin="0,0,4,0"
-                                                ToolTip="{DynamicResource TtpCopyPageToProfile}"
-                                                Click="CopyPageToProfileButton_Click"/>
-                                        <Button Content="↑" Command="{Binding ExportPageCommand}" Padding="9,5"
-                                                Margin="0,0,4,0" ToolTip="{DynamicResource TtpExportPage}"/>
-                                        <Button Content="↓" Command="{Binding ImportPageCommand}" Padding="9,5"
-                                                ToolTip="{DynamicResource TtpImportPage}"/>
-                                    </StackPanel>
-                                </DockPanel>
-                                <Border Margin="0,0,0,8" Padding="8,5" CornerRadius="4"
+                                <TextBlock Text="{DynamicResource TabKeyBindings}" FontSize="22" FontWeight="SemiBold"/>
+                                <TextBlock Text="{DynamicResource LblKeyBindingsHint}" Margin="0,6,0,12" Foreground="{DynamicResource ThemeMutedTextBrush}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                                <Border Grid.Row="1" Margin="0,0,0,8" Padding="8,5" CornerRadius="4"
                                         Background="{DynamicResource ThemeSuccessBackground}" BorderBrush="{DynamicResource ThemeSuccessBorder}" BorderThickness="1">
                                     <Border.Style>
                                         <Style TargetType="Border">
@@ -418,73 +473,60 @@
                                                    VerticalAlignment="Center" Foreground="{DynamicResource ThemeSuccessText}"/>
                                     </DockPanel>
                                 </Border>
-                                <ItemsControl ItemsSource="{Binding EditorPage.Keys}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <UniformGrid Columns="6" Rows="2"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type vm:KeyViewModel}">
-                                            <Button Margin="4" Height="86" Padding="3"
-                                                    Click="KeyButton_Click"
-                                                    BorderThickness="2">
-                                                <Button.Style>
-                                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                                        <Setter Property="Background" Value="#0D0D0D"/>
-                                                        <Setter Property="BorderBrush" Value="{DynamicResource ThemeBorderBrush}"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                                <Setter Property="BorderBrush" Value="#00D4E8"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding IsPressed}" Value="True">
-                                                                <Setter Property="Background" Value="#00D4E8"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Button.Style>
-                                                <Image Source="{Binding PreviewImage}" Stretch="Uniform"/>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                <DockPanel Margin="6,12,0,0">
-                                    <Button DockPanel.Dock="Right" Command="{Binding ToggleLearnModeCommand}"
-                                            ToolTip="{DynamicResource TtpLearnMode}">
-                                        <Button.Style>
-                                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                                <Setter Property="Content" Value="{DynamicResource BtnLearnMode}"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding LearnModeActive}" Value="True">
-                                                        <Setter Property="Content" Value="{DynamicResource BtnLearnCancel}"/>
-                                                        <Setter Property="BorderBrush" Value="#F5A524"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
-                                    <TextBlock Text="{Binding DeviceStatusText}" Foreground="{DynamicResource ThemeMutedTextBrush}"
-                                               VerticalAlignment="Center"/>
-                                </DockPanel>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </Border>
 
-                    <!-- Editor für die ausgewählte Taste -->
-                    <Border Grid.Column="1" Background="{DynamicResource ThemeCardBackground}" CornerRadius="10" BorderBrush="{DynamicResource ThemeBorderBrush}" BorderThickness="1" Padding="18">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                            <StackPanel DataContext="{Binding SelectedKey}">
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                    <TextBlock FontWeight="Bold" FontSize="14"
-                                               Text="{DynamicResource LblKeyPrefix}" Margin="0,0,4,0"/>
-                                    <TextBlock FontWeight="Bold" FontSize="14" Text="{Binding KeyNumber}"/>
+                            <Viewbox Grid.Row="2" Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,4,0,16">
+                                <Border Background="#17191C" BorderBrush="#50555B" BorderThickness="2,2,2,7" CornerRadius="16" Padding="18,14,18,12">
+                                    <StackPanel>
+                                        <ItemsControl x:Name="DeviceKeys" ItemsSource="{Binding EditorPage.Keys}" Width="612">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate><UniformGrid Columns="6" Rows="2"/></ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type vm:KeyViewModel}">
+                                                    <Button Width="94" Height="94" Margin="4" Padding="4" Click="KeyButton_Click" BorderThickness="2"
+                                                            ToolTip="{Binding Label}" AutomationProperties.AutomationId="{Binding KeyNumber}" AutomationProperties.Name="{Binding KeyNumber}">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                                <Setter Property="Background" Value="#090B0D"/>
+                                                                <Setter Property="BorderBrush" Value="#3D4147"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                        <Setter Property="BorderBrush" Value="{DynamicResource ThemeAccentBrush}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding IsPressed}" Value="True">
+                                                                        <Setter Property="Background" Value="{DynamicResource ThemeAccentBrush}"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                        <Image Source="{Binding PreviewImage}" Stretch="Uniform"/>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="{DynamicResource TabDisplayPad}" HorizontalAlignment="Center" Foreground="#9FA5AC" FontSize="10" Margin="0,7,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </Viewbox>
+                        </Grid>
+                        <Border Grid.Row="1" Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeBorderBrush}" BorderThickness="0,1,0,0" Padding="16">
+                            <DockPanel DataContext="{Binding SelectedKey}">
+                                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,14">
+                                    <TextBlock Text="{DynamicResource LblKeyPrefix}" FontWeight="SemiBold" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{Binding KeyNumber}" FontWeight="SemiBold"/>
                                 </StackPanel>
-
+                                <ScrollViewer x:Name="KeyEditorScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Margin="0,0,24,0">
                                 <TextBlock Text="{DynamicResource LblLabel}" Margin="0,0,0,3"/>
-                                <TextBox Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                                <TextBox x:Name="KeyLabelBox" Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
 
                                 <TextBlock Text="{DynamicResource LblFont}" Margin="0,0,0,3"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <WrapPanel Margin="0,0,0,10">
                                     <ComboBox Width="90" SelectedValuePath="Tag"
                                               SelectedValue="{Binding LabelPosition}" Margin="0,0,6,0"
                                               ToolTip="{DynamicResource TtpLabelPos}">
@@ -502,7 +544,7 @@
                                               VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <CheckBox Content="{DynamicResource CbItalic}" IsChecked="{Binding Italic}"
                                               VerticalAlignment="Center"/>
-                                </StackPanel>
+                                </WrapPanel>
 
                                 <TextBlock Text="{DynamicResource LblIcon}" Margin="0,0,0,3"/>
                                 <DockPanel Margin="0,0,0,10">
@@ -513,8 +555,11 @@
                                     <TextBox Text="{Binding IconPath, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True"/>
                                 </DockPanel>
 
+
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1">
                                 <TextBlock Text="{DynamicResource LblAction}" Margin="0,0,0,3"/>
-                                <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding ActionType}" Margin="0,0,0,10">
+                                <ComboBox x:Name="ActionTypePicker" SelectedValuePath="Tag" SelectedValue="{Binding ActionType}" Margin="0,0,0,10">
                                     <ComboBoxItem Content="{DynamicResource AcNone}"
                                                   Tag="{x:Static models:KeyActionType.None}"/>
                                     <ComboBoxItem Content="{DynamicResource AcHotkey}"
@@ -870,24 +915,24 @@
                                 <Button Content="{DynamicResource BtnTestAction}"
                                         Command="{Binding DataContext.TestActionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                         HorizontalAlignment="Left" Margin="0,4,0,0"/>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </Border>
+
+                                        </StackPanel>
+                                    </Grid>
+                                </ScrollViewer>
+                            </DockPanel>
+                        </Border>
+                    </Grid>
                 </Grid>
             </TabItem>
-
-            <!-- ═══════════════════════════════════════════ Tab 2: Dienste ══════════ -->
             <TabItem Header="{DynamicResource TabServices}">
-                <Grid Margin="10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24">
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource TabServices}" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,20"/>
+                <UniformGrid Columns="2">
 
                     <!-- Card: Remote Agent -->
-                    <Border Grid.Column="0" Background="{DynamicResource ThemeCardBackground}" CornerRadius="8" BorderBrush="{DynamicResource ThemeBorderBrush}"
-                            BorderThickness="1" Padding="16" Margin="0,0,8,0" VerticalAlignment="Top">
+                    <Border Background="{DynamicResource ThemeCardBackground}" CornerRadius="8" BorderBrush="{DynamicResource ThemeBorderBrush}"
+                            BorderThickness="1" Padding="16" Margin="0,0,16,16" VerticalAlignment="Top">
                         <StackPanel>
                             <DockPanel Margin="0,0,0,12">
                                 <Ellipse Width="10" Height="10" DockPanel.Dock="Right" VerticalAlignment="Center">
@@ -915,8 +960,8 @@
                     </Border>
 
                     <!-- Card: OBS Studio -->
-                    <Border Grid.Column="1" Background="{DynamicResource ThemeCardBackground}" CornerRadius="8" BorderBrush="{DynamicResource ThemeBorderBrush}"
-                            BorderThickness="1" Padding="16" Margin="4,0" VerticalAlignment="Top">
+                    <Border Background="{DynamicResource ThemeCardBackground}" CornerRadius="8" BorderBrush="{DynamicResource ThemeBorderBrush}"
+                            BorderThickness="1" Padding="16" Margin="0,0,16,16" VerticalAlignment="Top">
                         <StackPanel>
                             <DockPanel Margin="0,0,0,12">
                                 <Ellipse Width="10" Height="10" DockPanel.Dock="Right" VerticalAlignment="Center">
@@ -944,8 +989,8 @@
                     </Border>
 
                     <!-- Card: Mountain Base Camp -->
-                    <Border Grid.Column="2" Background="{DynamicResource ThemeCardBackground}" CornerRadius="8" BorderBrush="{DynamicResource ThemeBorderBrush}"
-                            BorderThickness="1" Padding="16" Margin="8,0,0,0" VerticalAlignment="Top">
+                    <Border Background="{DynamicResource ThemeCardBackground}" CornerRadius="8" BorderBrush="{DynamicResource ThemeBorderBrush}"
+                            BorderThickness="1" Padding="16" Margin="0,0,16,16" VerticalAlignment="Top">
                         <StackPanel>
                             <DockPanel Margin="0,0,0,12">
                                 <Ellipse Width="10" Height="10" DockPanel.Dock="Right" VerticalAlignment="Center">
@@ -976,7 +1021,7 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
-                            <StackPanel Orientation="Horizontal">
+                            <WrapPanel>
                                 <Button Content="{DynamicResource BtnDisableBaseCamp}"
                                         Command="{Binding DisableBaseCampCommand}"
                                         IsEnabled="{Binding BaseCampInstalled}" Margin="0,0,8,0"
@@ -985,22 +1030,47 @@
                                         Command="{Binding EnableBaseCampCommand}"
                                         IsEnabled="{Binding BaseCampInstalled}"
                                         ToolTip="{DynamicResource TtpEnableBaseCamp}"/>
-                            </StackPanel>
+                            </WrapPanel>
                         </StackPanel>
                     </Border>
 
-                </Grid>
+                </UniformGrid>
+                </StackPanel>
+                </ScrollViewer>
             </TabItem>
 
-            <!-- ═══════════════════════════════════════════ Tab 3: Einstellungen ════ -->
             <TabItem Header="{DynamicResource TabSettings}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                              Margin="10">
-                    <StackPanel MaxWidth="500" HorizontalAlignment="Left">
+                              Margin="24">
+                    <StackPanel MaxWidth="640" HorizontalAlignment="Left">
+                        <TextBlock Text="{DynamicResource TabSettings}" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,20"/>
+                        <TextBlock Text="{DynamicResource LblDeviceSection}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                        <Border Background="{DynamicResource ThemeCardBackground}" BorderBrush="{DynamicResource ThemeBorderBrush}" BorderThickness="1" Padding="16" Margin="0,0,0,20">
+                            <StackPanel>
+                                <TextBlock Text="{Binding DeviceStatusText}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                                    <Button HorizontalAlignment="Left" Command="{Binding ToggleLearnModeCommand}"
+                                            ToolTip="{DynamicResource TtpLearnMode}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                <Setter Property="Content" Value="{DynamicResource BtnLearnMode}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding LearnModeActive}" Value="True">
+                                                        <Setter Property="Content" Value="{DynamicResource BtnLearnCancel}"/>
+                                                        <Setter Property="BorderBrush" Value="#F5A524"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+
+                                <Button Content="{DynamicResource BtnResetMappings}" Command="{Binding ResetStoredMappingsCommand}"
+                                        ToolTip="{DynamicResource TtpResetMappings}" HorizontalAlignment="Left" Margin="0,12,0,0"/>
+                            </StackPanel>
+                        </Border>
 
                         <!-- Autostart -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Ellipse Width="7" Height="7" Fill="#00D4E8" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                            <Ellipse Width="7" Height="7" Fill="{DynamicResource ThemeAccentBrush}" VerticalAlignment="Center" Margin="0,0,7,0"/>
                             <TextBlock Text="{DynamicResource LblAutostartSection}" FontWeight="Bold" FontSize="14"/>
                         </StackPanel>
                         <Border Background="{DynamicResource ThemeCardBackground}" CornerRadius="8" BorderBrush="{DynamicResource ThemeBorderBrush}" BorderThickness="1" Padding="14" Margin="0,0,0,16">
@@ -1010,7 +1080,7 @@
 
                         <!-- Sprache / Language -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Ellipse Width="7" Height="7" Fill="#00D4E8" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                            <Ellipse Width="7" Height="7" Fill="{DynamicResource ThemeAccentBrush}" VerticalAlignment="Center" Margin="0,0,7,0"/>
                             <TextBlock Text="{DynamicResource LblLanguageSection}" FontWeight="Bold" FontSize="14"/>
                         </StackPanel>
                         <Border Background="{DynamicResource ThemeCardBackground}" CornerRadius="8" BorderBrush="{DynamicResource ThemeBorderBrush}" BorderThickness="1" Padding="14" Margin="0,0,0,16">
@@ -1023,7 +1093,7 @@
 
                         <!-- Design -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Ellipse Width="7" Height="7" Fill="#00D4E8" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                            <Ellipse Width="7" Height="7" Fill="{DynamicResource ThemeAccentBrush}" VerticalAlignment="Center" Margin="0,0,7,0"/>
                             <TextBlock Text="{DynamicResource LblThemeSection}" FontWeight="Bold" FontSize="14"/>
                         </StackPanel>
                         <Border Background="{DynamicResource ThemeCardBackground}" CornerRadius="8"
@@ -1038,7 +1108,7 @@
 
                         <!-- Über / About -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Ellipse Width="7" Height="7" Fill="#00D4E8" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                            <Ellipse Width="7" Height="7" Fill="{DynamicResource ThemeAccentBrush}" VerticalAlignment="Center" Margin="0,0,7,0"/>
                             <TextBlock Text="{DynamicResource LblAboutSection}" FontWeight="Bold" FontSize="14"/>
                         </StackPanel>
                         <Border Background="{DynamicResource ThemeCardBackground}" CornerRadius="8" BorderBrush="{DynamicResource ThemeBorderBrush}" BorderThickness="1" Padding="14" Margin="0,0,0,16">
@@ -1069,46 +1139,39 @@
             </TabItem>
 
         </TabControl>
-
-        <!-- Fußzeile -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" VerticalAlignment="Center"
-                       Foreground="{DynamicResource ThemeMutedTextBrush}"/>
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="{DynamicResource BtnResetMappings}"
-                        Command="{Binding ResetStoredMappingsCommand}" Margin="0,0,8,0"
-                        ToolTip="{DynamicResource TtpResetMappings}"/>
-                <Button Content="{DynamicResource BtnSave}" Command="{Binding SaveCommand}" Margin="0,0,8,0"/>
-                <Button Content="{DynamicResource BtnUpload}" Command="{Binding UploadToDeviceCommand}"
-                        Background="#00D4E8" Foreground="#071417" BorderBrush="#00D4E8"
-                        Padding="14,7" MinHeight="36" FontWeight="SemiBold">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="6" Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="#4DE4F1"/>
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="#00AFC0"/>
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter TargetName="Bd" Property="Opacity" Value="0.35"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-            </StackPanel>
-        </Grid>
+        <Border Grid.Row="2" Background="{DynamicResource ThemeHeaderBackground}" BorderBrush="{DynamicResource ThemeBorderBrush}" BorderThickness="0,1,0,0" Padding="24,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" TextWrapping="Wrap" MaxHeight="54" Margin="0,0,20,0"
+                           ToolTip="{Binding StatusMessage}" Foreground="{DynamicResource ThemeMutedTextBrush}"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="{DynamicResource BtnSave}" Command="{Binding SaveCommand}" MinWidth="110" Margin="0,0,10,0"/>
+                    <Button Content="{DynamicResource BtnUpload}" Command="{Binding UploadToDeviceCommand}" Background="{DynamicResource ThemeAccentBrush}"
+                            Foreground="{DynamicResource ThemeAccentTextBrush}" BorderBrush="{DynamicResource ThemeAccentBrush}" Padding="18,7" MinHeight="36" FontWeight="SemiBold">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="UploadBackground" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="UploadBackground" Property="Opacity" Value="0.85"/>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="UploadBackground" Property="Opacity" Value="0.7"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="UploadBackground" Property="Opacity" Value="0.35"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

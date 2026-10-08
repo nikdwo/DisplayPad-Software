@@ -2,6 +2,13 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:s="clr-namespace:System;assembly=mscorlib">
 
+    <s:String x:Key="TabProfiles">Profiles</s:String>
+    <s:String x:Key="TabKeyBindings">Key bindings</s:String>
+    <s:String x:Key="LblPages">Pages</s:String>
+    <s:String x:Key="LblDeviceSection">Device</s:String>
+    <s:String x:Key="LblProfilesHint">Profiles keep your pages and key bindings together for different applications.</s:String>
+    <s:String x:Key="LblKeyBindingsHint">Select a key, then set its image, label and action below.</s:String>
+
     <!-- Tabs -->
     <s:String x:Key="TabDisplayPad">DisplayPad</s:String>
     <s:String x:Key="TabServices">Services</s:String>
