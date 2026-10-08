@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DisplayPad.Shared\DisplayPad.Shared.csproj" />
+    <InternalsVisibleTo Include="DisplayPad.Agent.Tests" />
   </ItemGroup>
 
   <ItemGroup>

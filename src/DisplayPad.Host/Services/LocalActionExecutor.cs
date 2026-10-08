@@ -18,6 +18,8 @@ public static class LocalActionExecutor
                 case KeyActionType.Command:
                     CommandExecutor.Run(action.CommandLine ?? "", action.WorkingDirectory);
                     return OperationResult.Ok();
+                case KeyActionType.LaunchProgram:
+                    return ProgramExecutor.Run(action.ProgramPath, action.ProgramArguments, action.WorkingDirectory);
                 default:
                     return OperationResult.Fail(OperationErrorCode.LocalUnsupportedAction);
             }

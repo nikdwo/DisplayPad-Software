@@ -332,7 +332,7 @@
         </Style>
     </Window.Resources>
 
-    <Grid>
+    <Grid IsEnabled="{Binding CanEdit}">
         <Grid.RowDefinitions>
             <RowDefinition Height="68"/>
             <RowDefinition Height="*"/>
@@ -351,7 +351,7 @@
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="{DynamicResource LblProfile}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <ComboBox x:Name="ActiveProfilePicker" Width="210" ItemsSource="{Binding Profiles}" SelectedItem="{Binding ActiveProfile}"
+                    <ComboBox x:Name="ActiveProfilePicker" Width="210" ItemsSource="{Binding Profiles}" SelectedItem="{Binding ActiveProfile}" IsEnabled="{Binding CanNavigate}"
                               DisplayMemberPath="Name" ToolTip="{DynamicResource TtpProfileName}"/>
                 </StackPanel>
             </Grid>
@@ -374,7 +374,7 @@
                         </Grid.ColumnDefinitions>
                         <DockPanel Margin="0,0,24,0">
                             <Button DockPanel.Dock="Bottom" Content="{DynamicResource TtpAddProfile}" Command="{Binding AddProfileCommand}" Margin="0,12,0,0"/>
-                            <ListBox x:Name="ProfileList" ItemsSource="{Binding Profiles}" SelectedItem="{Binding ActiveProfile}">
+                            <ListBox x:Name="ProfileList" ItemsSource="{Binding Profiles}" SelectedItem="{Binding ActiveProfile}" IsEnabled="{Binding CanNavigate}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel>
@@ -429,7 +429,7 @@
                                     <Button Content="↓" Command="{Binding ImportPageCommand}" ToolTip="{DynamicResource TtpImportPage}" AutomationProperties.Name="{DynamicResource TtpImportPage}" Padding="0"/>
                                 </UniformGrid>
                             </StackPanel>
-                            <ListBox x:Name="PageList" ItemsSource="{Binding Pages}" SelectedItem="{Binding ActivePage}">
+                            <ListBox x:Name="PageList" ItemsSource="{Binding Pages}" SelectedItem="{Binding ActivePage}" IsEnabled="{Binding CanNavigate}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
@@ -468,8 +468,9 @@
                                     <DockPanel>
                                         <Button DockPanel.Dock="Right" Content="{DynamicResource BtnBack}"
                                                 Command="{Binding ExitFolderEditorCommand}"
+                                                IsEnabled="{Binding CanNavigate}"
                                                 Padding="8,3" Margin="8,0,0,0"/>
-                                        <TextBlock Text="{Binding EditorBreadcrumb}"
+                                        <TextBlock Text="{Binding EditorBreadcrumb}" TextWrapping="Wrap"
                                                    VerticalAlignment="Center" Foreground="{DynamicResource ThemeSuccessText}"/>
                                     </DockPanel>
                                 </Border>
@@ -483,7 +484,11 @@
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate DataType="{x:Type vm:KeyViewModel}">
+                                                    <Grid>
                                                     <Button Width="94" Height="94" Margin="4" Padding="4" Click="KeyButton_Click" BorderThickness="2"
+                                                            PreviewMouseLeftButtonDown="KeyButton_PreviewMouseLeftButtonDown"
+                                                            PreviewMouseMove="KeyButton_PreviewMouseMove" LostMouseCapture="KeyButton_LostMouseCapture"
+                                                            AllowDrop="True" DragOver="KeyButton_DragOver" Drop="KeyButton_Drop"
                                                             ToolTip="{Binding Label}" AutomationProperties.AutomationId="{Binding KeyNumber}" AutomationProperties.Name="{Binding KeyNumber}">
                                                         <Button.Style>
                                                             <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -496,11 +501,42 @@
                                                                     <DataTrigger Binding="{Binding IsPressed}" Value="True">
                                                                         <Setter Property="Background" Value="{DynamicResource ThemeAccentBrush}"/>
                                                                     </DataTrigger>
+                                                                    <MultiDataTrigger>
+                                                                        <MultiDataTrigger.Conditions>
+                                                                            <Condition Binding="{Binding KeyIndex}" Value="{x:Static models:AppConfig.FolderBackKeyIndex}"/>
+                                                                            <Condition Binding="{Binding DataContext.InFolderEditor, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                                                        </MultiDataTrigger.Conditions>
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </MultiDataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Button.Style>
                                                         <Image Source="{Binding PreviewImage}" Stretch="Uniform"/>
                                                     </Button>
+                                                    <Button Width="94" Height="94" Margin="4" Padding="4" BorderThickness="2"
+                                                            Command="{Binding DataContext.ExitFolderEditorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            IsEnabled="{Binding DataContext.CanNavigate, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            ToolTip="{DynamicResource LabelBack}" AutomationProperties.Name="{DynamicResource LabelBack}"
+                                                            AutomationProperties.AutomationId="FolderBackButton">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Setter Property="Background" Value="#090B0D"/>
+                                                                <Setter Property="BorderBrush" Value="#3D4147"/>
+                                                                <Style.Triggers>
+                                                                    <MultiDataTrigger>
+                                                                        <MultiDataTrigger.Conditions>
+                                                                            <Condition Binding="{Binding KeyIndex}" Value="{x:Static models:AppConfig.FolderBackKeyIndex}"/>
+                                                                            <Condition Binding="{Binding DataContext.InFolderEditor, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                                                        </MultiDataTrigger.Conditions>
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </MultiDataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                        <Image Source="{Binding DataContext.BackButtonImage, RelativeSource={RelativeSource AncestorType=Window}}" Stretch="Uniform"/>
+                                                    </Button>
+                                                    </Grid>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
@@ -559,21 +595,25 @@
                                         </StackPanel>
                                         <StackPanel Grid.Column="1">
                                 <TextBlock Text="{DynamicResource LblAction}" Margin="0,0,0,3"/>
-                                <ComboBox x:Name="ActionTypePicker" SelectedValuePath="Tag" SelectedValue="{Binding ActionType}" Margin="0,0,0,10">
+                                <ComboBox x:Name="ActionTypePicker" SelectedValuePath="Tag" SelectedValue="{Binding EditorAction}" Margin="0,0,0,10">
                                     <ComboBoxItem Content="{DynamicResource AcNone}"
-                                                  Tag="{x:Static models:KeyActionType.None}"/>
+                                                  Tag="{x:Static vm:EditorActionType.None}"/>
                                     <ComboBoxItem Content="{DynamicResource AcHotkey}"
-                                                  Tag="{x:Static models:KeyActionType.Hotkey}"/>
+                                                  Tag="{x:Static vm:EditorActionType.Hotkey}"/>
+                                    <ComboBoxItem Content="{DynamicResource AcMultimedia}"
+                                                  Tag="{x:Static vm:EditorActionType.Multimedia}"/>
+                                    <ComboBoxItem Content="{DynamicResource AcLaunchProgram}"
+                                                  Tag="{x:Static vm:EditorActionType.LaunchProgram}"/>
                                     <ComboBoxItem Content="{DynamicResource AcCommand}"
-                                                  Tag="{x:Static models:KeyActionType.Command}"/>
+                                                  Tag="{x:Static vm:EditorActionType.Command}"/>
                                     <ComboBoxItem Content="{DynamicResource AcSwitchPage}"
-                                                  Tag="{x:Static models:KeyActionType.SwitchPage}"/>
+                                                  Tag="{x:Static vm:EditorActionType.SwitchPage}"/>
                                     <ComboBoxItem Content="{DynamicResource AcObs}"
-                                                  Tag="{x:Static models:KeyActionType.Obs}"/>
+                                                  Tag="{x:Static vm:EditorActionType.Obs}"/>
                                     <ComboBoxItem Content="{DynamicResource AcNvidia}"
-                                                  Tag="{x:Static models:KeyActionType.Nvidia}"/>
+                                                  Tag="{x:Static vm:EditorActionType.Nvidia}"/>
                                     <ComboBoxItem Content="{DynamicResource AcFolder}"
-                                                  Tag="{x:Static models:KeyActionType.Folder}"/>
+                                                  Tag="{x:Static vm:EditorActionType.Folder}"/>
                                 </ComboBox>
 
                                 <!-- NVIDIA-Eingabe -->
@@ -781,7 +821,7 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <!-- Ziel-Auswahl (nur bei Hotkey/Befehl) -->
+                                <!-- Ziel-Auswahl -->
                                 <StackPanel Margin="0,0,0,10">
                                     <StackPanel.Style>
                                         <Style TargetType="StackPanel">
@@ -789,6 +829,10 @@
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding ActionType}"
                                                              Value="{x:Static models:KeyActionType.Hotkey}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding ActionType}"
+                                                             Value="{x:Static models:KeyActionType.LaunchProgram}">
                                                     <Setter Property="Visibility" Value="Visible"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding ActionType}"
@@ -815,8 +859,8 @@
                                         <Style TargetType="StackPanel">
                                             <Setter Property="Visibility" Value="Collapsed"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding ActionType}"
-                                                             Value="{x:Static models:KeyActionType.Hotkey}">
+                                                <DataTrigger Binding="{Binding EditorAction}"
+                                                             Value="{x:Static vm:EditorActionType.Hotkey}">
                                                     <Setter Property="Visibility" Value="Visible"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -827,6 +871,83 @@
                                              Text="{Binding Hotkey, UpdateSourceTrigger=PropertyChanged}"
                                              PreviewKeyDown="HotkeyBox_PreviewKeyDown"
                                              ToolTip="{DynamicResource TtpHotkeyBox}"/>
+                                </StackPanel>
+
+                                <!-- Multimedia -->
+                                <StackPanel Margin="0,0,0,10">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding EditorAction}"
+                                                             Value="{x:Static vm:EditorActionType.Multimedia}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <TextBlock Text="{DynamicResource LblMediaFunction}" Margin="0,0,0,3"/>
+                                    <ComboBox x:Name="MediaCommandPicker" SelectedValuePath="Tag" SelectedValue="{Binding MediaCommand}">
+                                        <ComboBoxItem Content="{DynamicResource MediaPlayPause}" Tag="MediaPlayPause"/>
+                                        <ComboBoxItem Content="{DynamicResource MediaStop}" Tag="MediaStop"/>
+                                        <ComboBoxItem Content="{DynamicResource MediaNext}" Tag="MediaNext"/>
+                                        <ComboBoxItem Content="{DynamicResource MediaPrev}" Tag="MediaPrev"/>
+                                        <ComboBoxItem Content="{DynamicResource MediaVolumeUp}" Tag="VolumeUp"/>
+                                        <ComboBoxItem Content="{DynamicResource MediaVolumeDown}" Tag="VolumeDown"/>
+                                        <ComboBoxItem Content="{DynamicResource MediaVolumeMute}" Tag="VolumeMute"/>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <!-- Programmstart -->
+                                <StackPanel Margin="0,0,0,10">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ActionType}" Value="{x:Static models:KeyActionType.LaunchProgram}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <TextBlock Text="{DynamicResource LblProgram}" Margin="0,0,0,3"/>
+                                    <DockPanel Margin="0,0,0,8">
+                                        <Button DockPanel.Dock="Right" Content="{DynamicResource BtnBrowse}" Margin="6,0,0,0"
+                                                Command="{Binding DataContext.PickProgramCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                AutomationProperties.Name="{DynamicResource DlgProgramTitle}"/>
+                                        <TextBox x:Name="ProgramPathBox" Text="{Binding ProgramPath, UpdateSourceTrigger=PropertyChanged}"
+                                                 AutomationProperties.Name="{DynamicResource LblProgram}"/>
+                                    </DockPanel>
+                                    <TextBlock Text="{DynamicResource HintProgramTarget}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
+                                    <TextBlock Text="{DynamicResource HintProgramShortcut}" TextWrapping="Wrap" Margin="0,0,0,8">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsProgramShortcut}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <StackPanel>
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsProgramShortcut}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                        <TextBlock Text="{DynamicResource LblProgramArguments}" Margin="0,0,0,3"/>
+                                        <TextBox x:Name="ProgramArgumentsBox" Text="{Binding ProgramArguments, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"
+                                                 AutomationProperties.Name="{DynamicResource LblProgramArguments}"/>
+                                        <TextBlock Text="{DynamicResource LblWorkDir}" Margin="0,0,0,3"/>
+                                        <TextBox x:Name="ProgramWorkingDirectoryBox" Text="{Binding WorkingDirectory, UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTip="{DynamicResource HintProgramWorkingDirectory}" AutomationProperties.Name="{DynamicResource LblWorkDir}"/>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <!-- Befehls-Eingabe -->

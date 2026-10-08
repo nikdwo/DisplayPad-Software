@@ -7,7 +7,7 @@
     <s:String x:Key="LblPages">Pages</s:String>
     <s:String x:Key="LblDeviceSection">Device</s:String>
     <s:String x:Key="LblProfilesHint">Profiles keep your pages and key bindings together for different applications.</s:String>
-    <s:String x:Key="LblKeyBindingsHint">Select a key, then set its image, label and action below.</s:String>
+    <s:String x:Key="LblKeyBindingsHint">Click a key to edit. Hold the left mouse button and drag to move; occupied keys swap places.</s:String>
 
     <!-- Tabs -->
     <s:String x:Key="TabDisplayPad">DisplayPad</s:String>
@@ -53,10 +53,21 @@
     <!-- Action types -->
     <s:String x:Key="AcNone">No action</s:String>
     <s:String x:Key="AcHotkey">Send hotkey</s:String>
+    <s:String x:Key="AcMultimedia">Multimedia</s:String>
     <s:String x:Key="AcCommand">Run command</s:String>
     <s:String x:Key="AcSwitchPage">Switch page</s:String>
     <s:String x:Key="AcObs">Control OBS</s:String>
     <s:String x:Key="AcNvidia">NVIDIA Overlay</s:String>
+
+    <!-- Multimedia -->
+    <s:String x:Key="LblMediaFunction">Multimedia function</s:String>
+    <s:String x:Key="MediaPlayPause">Play/Pause</s:String>
+    <s:String x:Key="MediaStop">Stop</s:String>
+    <s:String x:Key="MediaNext">Next track</s:String>
+    <s:String x:Key="MediaPrev">Previous track</s:String>
+    <s:String x:Key="MediaVolumeUp">Volume up</s:String>
+    <s:String x:Key="MediaVolumeDown">Volume down</s:String>
+    <s:String x:Key="MediaVolumeMute">Mute/Unmute</s:String>
 
     <!-- NVIDIA -->
     <s:String x:Key="LblNvidiaHint">NVIDIA function (hotkey is read live from the NVIDIA app)</s:String>
@@ -120,6 +131,26 @@
     <!-- Hotkey panel -->
     <s:String x:Key="LblHotkeyHint">Key combination (click here and press combination)</s:String>
     <s:String x:Key="TtpHotkeyBox">e.g. Ctrl+Alt+F1 – media keys like MediaPlayPause can also be entered manually</s:String>
+
+    <!-- Program launch -->
+    <s:String x:Key="AcLaunchProgram">Run program</s:String>
+    <s:String x:Key="LblProgram">Program</s:String>
+    <s:String x:Key="LblProgramArguments">Arguments (optional)</s:String>
+    <s:String x:Key="DlgProgramTitle">Select a program or shortcut</s:String>
+    <s:String x:Key="DlgProgramFilter">Programs and shortcuts (*.exe;*.lnk)|*.exe;*.lnk</s:String>
+    <s:String x:Key="HintProgramTarget">Browse shows files on this PC. The absolute path must exist on the target computer; both computers use the same path.</s:String>
+    <s:String x:Key="HintProgramShortcut">The shortcut's own arguments and working directory are used.</s:String>
+    <s:String x:Key="HintProgramWorkingDirectory">Leave empty to use the program's directory.</s:String>
+    <s:String x:Key="ErrorProgramPathMissing">Select a program or shortcut first.</s:String>
+    <s:String x:Key="ErrorProgramPathInvalid">Enter a valid absolute path to an EXE file or LNK shortcut (up to 1024 characters).</s:String>
+    <s:String x:Key="ErrorProgramNotFound">The program or shortcut was not found on this target computer.</s:String>
+    <s:String x:Key="ErrorProgramArgumentsInvalid">The arguments are invalid or exceed 8192 characters.</s:String>
+    <s:String x:Key="ErrorProgramWorkingDirectoryInvalid">The working directory must be a valid absolute path and exist on the target computer.</s:String>
+    <s:String x:Key="ErrorProgramStartBlocked">Windows denied the program launch or the launch was cancelled.</s:String>
+    <s:String x:Key="ErrorProgramStartFailed">The program could not be started. Check the file and, for shortcuts, the linked target.</s:String>
+    <s:String x:Key="ErrorAgentProgramUpdateRequired">Update the DisplayPad Agent on the second computer to launch programs.</s:String>
+    <s:String x:Key="FieldProgramPath">Program path</s:String>
+    <s:String x:Key="FieldProgramArguments">Program arguments</s:String>
 
     <!-- Command panel -->
     <s:String x:Key="LblCommandHint">Command line (runs via cmd /c)</s:String>
@@ -202,6 +233,7 @@
     <!-- Status messages -->
     <s:String x:Key="MsgSaved">Configuration saved.</s:String>
     <s:String x:Key="MsgDeviceConnected">DisplayPad: connected</s:String>
+    <s:String x:Key="MsgDeviceNeedsUpload">DisplayPad: upload required</s:String>
     <s:String x:Key="MsgDeviceDisconnected">DisplayPad: disconnected</s:String>
     <s:String x:Key="MsgDeviceNotFound">DisplayPad: not found</s:String>
     <s:String x:Key="MsgTakeControlOk">Software control of the pad assumed.</s:String>
@@ -274,7 +306,7 @@ Afterwards the pad will no longer execute old commands on its own. Continue?</s:
 
     <!-- Folder -->
     <s:String x:Key="AcFolder">Open Folder</s:String>
-    <s:String x:Key="LblFolderHint">Opens a sub-level with 12 additional keys. Key 12 (bottom-right) always exits the folder.</s:String>
+    <s:String x:Key="LblFolderHint">Opens a folder with eleven assignable keys plus Back. Key 12 (bottom-right) goes up one level and cannot be changed.</s:String>
     <s:String x:Key="BtnEditFolder">Edit Folder Contents…</s:String>
     <s:String x:Key="MsgFolderEntered">Folder (Key {0}) opened</s:String>
     <s:String x:Key="MsgFolderExited">Folder exited</s:String>
@@ -328,7 +360,7 @@ Afterwards the pad will no longer execute old commands on its own. Continue?</s:
     <s:String x:Key="ErrorRemoteNetworkError">The agent is unavailable because of a network error.</s:String>
     <s:String x:Key="ErrorAgentTooManyAuthenticationFailures">Too many failed authentication attempts.</s:String>
     <s:String x:Key="ErrorAgentInvalidAuthentication">Invalid agent authentication.</s:String>
-    <s:String x:Key="ErrorAgentUnsupportedAction">The agent permits hotkey and command actions only.</s:String>
+    <s:String x:Key="ErrorAgentUnsupportedAction">The agent permits hotkeys, commands and program launches only.</s:String>
     <s:String x:Key="ErrorAgentMissingHotkey">The hotkey is missing.</s:String>
     <s:String x:Key="ErrorAgentMissingCommand">The command is missing.</s:String>
     <s:String x:Key="ErrorAgentExecutionFailed">The agent could not execute the action.</s:String>

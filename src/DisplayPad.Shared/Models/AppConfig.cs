@@ -42,7 +42,7 @@ public class ProfileConfig
 
 public class AppConfig
 {
-    public const int CurrentConfigVersion = 2;
+    public const int CurrentConfigVersion = 3;
     public const int KeyCount = 12;
     public const int FolderBackKeyIndex = KeyCount - 1;
 

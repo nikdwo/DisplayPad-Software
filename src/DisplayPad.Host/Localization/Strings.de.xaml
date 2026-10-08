@@ -7,7 +7,7 @@
     <s:String x:Key="LblPages">Seiten</s:String>
     <s:String x:Key="LblDeviceSection">Gerät</s:String>
     <s:String x:Key="LblProfilesHint">Profile bündeln deine Seiten und Tastenbelegungen für unterschiedliche Anwendungen.</s:String>
-    <s:String x:Key="LblKeyBindingsHint">Wähle eine Taste und lege darunter Bild, Beschriftung und Aktion fest.</s:String>
+    <s:String x:Key="LblKeyBindingsHint">Taste anklicken zum Bearbeiten. Mit gedrückter linker Maustaste verschieben; belegte Plätze werden getauscht.</s:String>
 
     <!-- Tabs -->
     <s:String x:Key="TabDisplayPad">DisplayPad</s:String>
@@ -53,10 +53,21 @@
     <!-- Action types -->
     <s:String x:Key="AcNone">Keine Aktion</s:String>
     <s:String x:Key="AcHotkey">Hotkey senden</s:String>
+    <s:String x:Key="AcMultimedia">Multimedia</s:String>
     <s:String x:Key="AcCommand">Befehl ausführen</s:String>
     <s:String x:Key="AcSwitchPage">Seite wechseln</s:String>
     <s:String x:Key="AcObs">OBS steuern</s:String>
     <s:String x:Key="AcNvidia">NVIDIA Overlay</s:String>
+
+    <!-- Multimedia -->
+    <s:String x:Key="LblMediaFunction">Multimedia-Funktion</s:String>
+    <s:String x:Key="MediaPlayPause">Wiedergabe/Pause</s:String>
+    <s:String x:Key="MediaStop">Stopp</s:String>
+    <s:String x:Key="MediaNext">Nächster Titel</s:String>
+    <s:String x:Key="MediaPrev">Vorheriger Titel</s:String>
+    <s:String x:Key="MediaVolumeUp">Lauter</s:String>
+    <s:String x:Key="MediaVolumeDown">Leiser</s:String>
+    <s:String x:Key="MediaVolumeMute">Stummschaltung ein/aus</s:String>
 
     <!-- NVIDIA -->
     <s:String x:Key="LblNvidiaHint">NVIDIA-Funktion (Hotkey wird live aus der NVIDIA-App gelesen)</s:String>
@@ -120,6 +131,26 @@
     <!-- Hotkey panel -->
     <s:String x:Key="LblHotkeyHint">Tastenkombination (hier klicken und Kombination drücken)</s:String>
     <s:String x:Key="TtpHotkeyBox">z.B. Ctrl+Alt+F1 – auch Medien-Tasten wie MediaPlayPause per Hand eintragbar</s:String>
+
+    <!-- Program launch -->
+    <s:String x:Key="AcLaunchProgram">Programm ausführen</s:String>
+    <s:String x:Key="LblProgram">Programm</s:String>
+    <s:String x:Key="LblProgramArguments">Startparameter (optional)</s:String>
+    <s:String x:Key="DlgProgramTitle">Programm oder Verknüpfung auswählen</s:String>
+    <s:String x:Key="DlgProgramFilter">Programme und Verknüpfungen (*.exe;*.lnk)|*.exe;*.lnk</s:String>
+    <s:String x:Key="HintProgramTarget">Durchsuchen zeigt Dateien dieses PCs. Der absolute Pfad muss auf dem Zielrechner existieren; bei beiden Rechnern gilt derselbe Pfad.</s:String>
+    <s:String x:Key="HintProgramShortcut">Die Startparameter und das Arbeitsverzeichnis aus der Verknüpfung werden verwendet.</s:String>
+    <s:String x:Key="HintProgramWorkingDirectory">Leer lassen, um den Programmordner zu verwenden.</s:String>
+    <s:String x:Key="ErrorProgramPathMissing">Bitte ein Programm oder eine Verknüpfung auswählen.</s:String>
+    <s:String x:Key="ErrorProgramPathInvalid">Bitte einen gültigen absoluten Pfad zu einer EXE-Datei oder LNK-Verknüpfung angeben (höchstens 1024 Zeichen).</s:String>
+    <s:String x:Key="ErrorProgramNotFound">Das Programm oder die Verknüpfung wurde auf diesem Zielrechner nicht gefunden.</s:String>
+    <s:String x:Key="ErrorProgramArgumentsInvalid">Die Startparameter sind ungültig oder länger als 8192 Zeichen.</s:String>
+    <s:String x:Key="ErrorProgramWorkingDirectoryInvalid">Das Arbeitsverzeichnis muss ein gültiger absoluter Pfad sein und auf dem Zielrechner existieren.</s:String>
+    <s:String x:Key="ErrorProgramStartBlocked">Windows hat den Programmstart verweigert oder der Start wurde abgebrochen.</s:String>
+    <s:String x:Key="ErrorProgramStartFailed">Das Programm konnte nicht gestartet werden. Prüfe die Datei und bei Verknüpfungen auch das hinterlegte Ziel.</s:String>
+    <s:String x:Key="ErrorAgentProgramUpdateRequired">Für Programmstarts muss der DisplayPad Agent auf dem Zweitrechner aktualisiert werden.</s:String>
+    <s:String x:Key="FieldProgramPath">Programmpfad</s:String>
+    <s:String x:Key="FieldProgramArguments">Startparameter</s:String>
 
     <!-- Command panel -->
     <s:String x:Key="LblCommandHint">Befehlszeile (läuft via cmd /c)</s:String>
@@ -202,6 +233,7 @@
     <!-- Status messages -->
     <s:String x:Key="MsgSaved">Konfiguration gespeichert.</s:String>
     <s:String x:Key="MsgDeviceConnected">DisplayPad: verbunden</s:String>
+    <s:String x:Key="MsgDeviceNeedsUpload">DisplayPad: Übertragung erforderlich</s:String>
     <s:String x:Key="MsgDeviceDisconnected">DisplayPad: getrennt</s:String>
     <s:String x:Key="MsgDeviceNotFound">DisplayPad: nicht gefunden</s:String>
     <s:String x:Key="MsgTakeControlOk">Software-Kontrolle über das Pad übernommen.</s:String>
@@ -274,7 +306,7 @@ Danach führt das Pad keine alten Befehle mehr selbstständig aus. Fortfahren?</
 
     <!-- Folder -->
     <s:String x:Key="AcFolder">Ordner öffnen</s:String>
-    <s:String x:Key="LblFolderHint">Öffnet eine Unterebene mit 12 weiteren Tasten. Taste 12 (unten rechts) verlässt den Ordner automatisch.</s:String>
+    <s:String x:Key="LblFolderHint">Öffnet einen Ordner mit elf belegbaren Tasten plus Zurück. Taste 12 (unten rechts) führt eine Ebene nach oben und kann nicht geändert werden.</s:String>
     <s:String x:Key="BtnEditFolder">Ordner-Inhalt bearbeiten…</s:String>
     <s:String x:Key="MsgFolderEntered">Ordner (Taste {0}) geöffnet</s:String>
     <s:String x:Key="MsgFolderExited">Ordner verlassen</s:String>
@@ -328,7 +360,7 @@ Danach führt das Pad keine alten Befehle mehr selbstständig aus. Fortfahren?</
     <s:String x:Key="ErrorRemoteNetworkError">Der Agent ist wegen eines Netzwerkfehlers nicht erreichbar.</s:String>
     <s:String x:Key="ErrorAgentTooManyAuthenticationFailures">Zu viele fehlgeschlagene Anmeldungen.</s:String>
     <s:String x:Key="ErrorAgentInvalidAuthentication">Ungültige Agent-Anmeldung.</s:String>
-    <s:String x:Key="ErrorAgentUnsupportedAction">Der Agent erlaubt nur Hotkey- und Befehlsaktionen.</s:String>
+    <s:String x:Key="ErrorAgentUnsupportedAction">Der Agent erlaubt nur Hotkeys, Befehle und Programmstarts.</s:String>
     <s:String x:Key="ErrorAgentMissingHotkey">Der Hotkey fehlt.</s:String>
     <s:String x:Key="ErrorAgentMissingCommand">Der Befehl fehlt.</s:String>
     <s:String x:Key="ErrorAgentExecutionFailed">Der Agent konnte die Aktion nicht ausführen.</s:String>

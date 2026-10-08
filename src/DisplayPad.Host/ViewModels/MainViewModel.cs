@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -23,42 +24,72 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private bool _initialized;
     private bool _statusRefreshInProgress;
     private bool _disposed;
-    private PageViewModel? _runtimePage;
-    private readonly Stack<PageViewModel> _pageHistory = new();
-    private readonly Stack<(PageViewModel parentPage, KeyViewModel folderKey)> _editorStack = new();
+    private readonly PageNavigation _navigation;
+    private BitmapImage? _backButtonImage;
 
     private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
     private static readonly JsonSerializerOptions _jsonReadOptions = new() { PropertyNameCaseInsensitive = true };
 
     public ObservableCollection<ProfileViewModel> Profiles { get; } = new();
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Pages))]
-    [NotifyPropertyChangedFor(nameof(PageIndicator))]
     private ProfileViewModel? _activeProfile;
+    public ProfileViewModel? ActiveProfile
+    {
+        get => _activeProfile;
+        set
+        {
+            if (_initialized && !CanNavigate) return;
+            if (!SetProperty(ref _activeProfile, value)) return;
+            OnPropertyChanged(nameof(Pages));
+            OnPropertyChanged(nameof(PageIndicator));
+            OnActiveProfileChanged(value);
+        }
+    }
 
     private static readonly ObservableCollection<PageViewModel> _emptyPages = new();
     public ObservableCollection<PageViewModel> Pages => ActiveProfile?.Pages ?? _emptyPages;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(PageIndicator))]
     private PageViewModel? _activePage;
+    public PageViewModel? ActivePage
+    {
+        get => _activePage;
+        set
+        {
+            if (_initialized && !CanNavigate) return;
+            if (!SetProperty(ref _activePage, value)) return;
+            OnPropertyChanged(nameof(PageIndicator));
+            OnActivePageChanged(value);
+        }
+    }
 
     public string PageIndicator =>
         ActivePage is null ? "" : $"{Pages.IndexOf(ActivePage) + 1}/{Pages.Count}";
 
-    [ObservableProperty]
-    private KeyViewModel? _selectedKey;
+    public KeyViewModel SelectedKey => _navigation.SelectedKey;
+    public PageViewModel EditorPage => _navigation.CurrentPage;
+    public bool InFolderEditor => _navigation.InFolder;
+    public bool CanEdit => !_navigation.IsBusy;
+    public bool CanNavigate => CanEdit && !LearnModeActive;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(InFolderEditor))]
-    [NotifyPropertyChangedFor(nameof(EditorBreadcrumb))]
-    private PageViewModel? _editorPage;
+    public string EditorBreadcrumb => !InFolderEditor ? "" : _navigation.Path.Aggregate(
+        ActivePage?.Name ?? "", (path, folder) =>
+            string.Format(Loc.Get("FmtEditorBreadcrumb"), path, folder.FolderKey.KeyNumber));
 
-    public bool InFolderEditor => _editorStack.Count > 0;
-
-    public string EditorBreadcrumb => _editorStack.Count == 0 ? ""
-        : string.Format(Loc.Get("FmtEditorBreadcrumb"), ActivePage?.Name, _editorStack.Peek().folderKey.KeyNumber);
+    public BitmapImage BackButtonImage
+    {
+        get
+        {
+            if (_backButtonImage is not null) return _backButtonImage;
+            using var stream = new MemoryStream(KeyImageRenderer.RenderBackButtonPngBytes(Loc.Get("LabelBack")));
+            var image = new BitmapImage();
+            image.BeginInit();
+            image.CacheOption = BitmapCacheOption.OnLoad;
+            image.StreamSource = stream;
+            image.EndInit();
+            image.Freeze();
+            return _backButtonImage = image;
+        }
+    }
 
     [ObservableProperty]
     private string _agentHost;
@@ -110,6 +141,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private bool _baseCampInstalled;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanNavigate))]
     private bool _learnModeActive;
 
     [ObservableProperty]
@@ -165,36 +197,27 @@ public partial class MainViewModel : ObservableObject, IDisposable
         // OnActiveProfileChanged prüft _initialized, daher ist der Property-Setter hier sicher
         ActiveProfile = Profiles[_config.ActiveProfileIndex];
         ActivePage = ActiveProfile!.Pages.First();
-        SelectKey(ActivePage.Keys.First());
-        _runtimePage = ActivePage;
-        EditorPage = ActivePage;
+        _navigation = new PageNavigation(ActivePage, UploadPageToDeviceAsync);
+        _navigation.Changed += NavigationChanged;
 
         _dispatcher = new ActionDispatcher();
         _dispatcher.Configure(_agentHost, _agentPort, _agentToken, _agentCertificateFingerprint);
 
         _device = new DeviceService(_config.KeyMatrixMap);
         _uploadCoordinator = new DeviceUploadCoordinator(_device);
-        _device.PlugChanged += connected => RunOnUi(() =>
-        {
-            DeviceConnected = connected;
-            DeviceStatusText = connected ? Loc.Get("MsgDeviceConnected") : Loc.Get("MsgDeviceDisconnected");
-            if (connected)
-                TakeControlIfConfigured();
-        });
+        _device.PlugChanged += connected => RunOnUi(() => _ = SetDeviceConnectedAsync(connected));
         _device.RawKeyPressed += matrix => RunOnUi(() =>
         {
-            if (LearnModeActive)
+            if (LearnModeActive && CanEdit)
                 HandleLearnPress(matrix);
-            else
+            else if (_navigation.CanDispatchPadActions)
                 StatusMessage = string.Format(Loc.Get("MsgKeyPressed"), matrix);
         });
         _device.KeyPressed += index => RunOnUi(() => OnPadKeyPressed(index));
 
         if (_device.TryFindDevice())
         {
-            DeviceConnected = true;
-            DeviceStatusText = Loc.Get("MsgDeviceConnected");
-            TakeControlIfConfigured();
+            _ = SetDeviceConnectedAsync(true);
         }
         else
         {
@@ -224,23 +247,32 @@ public partial class MainViewModel : ObservableObject, IDisposable
             StatusMessage = OperationText.Format(ConfigStore.LastLoadWarning);
     }
 
-    private void TakeControlIfConfigured()
+    private async Task SetDeviceConnectedAsync(bool connected)
     {
-        if (!_config.AutoApEnable)
-            return;
+        if (_disposed || DeviceConnected == connected) return;
+        DeviceConnected = connected;
+        DeviceStatusText = connected ? Loc.Get("MsgDeviceConnected") : Loc.Get("MsgDeviceDisconnected");
+        await _navigation.SetDeviceConnectedAsync(connected);
+    }
 
-        Task.Run(() =>
-        {
-            bool ok = _device.TakeControl();
-            RunOnUi(() => StatusMessage = ok
-                ? Loc.Get("MsgTakeControlOk")
-                : Loc.Get("MsgTakeControlFail"));
-        });
+    private void NavigationChanged()
+    {
+        OnPropertyChanged(nameof(EditorPage));
+        OnPropertyChanged(nameof(SelectedKey));
+        OnPropertyChanged(nameof(InFolderEditor));
+        OnPropertyChanged(nameof(EditorBreadcrumb));
+        OnPropertyChanged(nameof(CanEdit));
+        OnPropertyChanged(nameof(CanNavigate));
+        if (DeviceConnected)
+            DeviceStatusText = _navigation.IsSynchronized
+                ? Loc.Get("MsgDeviceConnected") : Loc.Get("MsgDeviceNeedsUpload");
     }
 
     partial void OnLanguageChanged(string value)
     {
         Loc.Switch(value);
+        _backButtonImage = null;
+        OnPropertyChanged(nameof(BackButtonImage));
         _config.Language = value;
         try
         {
@@ -249,7 +281,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex) { StatusMessage = OperationText.Format(OperationText.FromException(ex)); }
         OnPropertyChanged(nameof(EditorBreadcrumb));
-        DeviceStatusText = DeviceConnected ? Loc.Get("MsgDeviceConnected") : Loc.Get("MsgDeviceDisconnected");
+        DeviceStatusText = !DeviceConnected ? Loc.Get("MsgDeviceDisconnected")
+            : _navigation.IsSynchronized ? Loc.Get("MsgDeviceConnected") : Loc.Get("MsgDeviceNeedsUpload");
         _ = RefreshAgentStatusAsync();
         RefreshBaseCampStatus();
         _ = RefreshObsStatusAsync();
@@ -268,8 +301,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void ToggleLearnMode()
+    private async Task ToggleLearnModeAsync()
     {
+        if (!CanEdit) return;
         if (LearnModeActive)
         {
             LearnModeActive = false;
@@ -277,12 +311,19 @@ public partial class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
-        if (!DeviceConnected && !_device.TryFindDevice())
+        if (!DeviceConnected)
         {
-            StatusMessage = Loc.Get("MsgNoDevice");
-            return;
+            if (!_device.TryFindDevice())
+            {
+                StatusMessage = Loc.Get("MsgNoDevice");
+                return;
+            }
+            await SetDeviceConnectedAsync(true);
+            if (!DeviceConnected || !CanEdit) return;
         }
 
+        if (InFolderEditor && ActivePage is not null && !await _navigation.SelectRootAsync(ActivePage))
+            return;
         _learnIndex = 0;
         LearnModeActive = true;
         HighlightLearnKey();
@@ -371,51 +412,37 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private static void RunOnUi(Action action) =>
         Application.Current.Dispatcher.BeginInvoke(action);
 
-    partial void OnActiveProfileChanged(ProfileViewModel? value)
+    private void OnActiveProfileChanged(ProfileViewModel? value)
     {
         if (!_initialized || value is null)
             return;
 
         _config.ActiveProfileIndex = Profiles.IndexOf(value);
-        ActivePage = value.Pages.FirstOrDefault();
-        if (ActivePage is not null)
-            SelectKey(ActivePage.Keys.First());
         StatusMessage = string.Format(Loc.Get("MsgProfileActive"), value.Name);
+        ActivePage = value.Pages.FirstOrDefault();
     }
 
-    partial void OnActivePageChanged(PageViewModel? value)
+    private void OnActivePageChanged(PageViewModel? value)
     {
         if (!_initialized || value is null)
             return;
 
-        _pageHistory.Clear();
-        _editorStack.Clear();
-        EditorPage = value;
-        OnPropertyChanged(nameof(InFolderEditor));
-        OnPropertyChanged(nameof(EditorBreadcrumb));
-        SelectKey(value.Keys.First());
         StatusMessage = string.Format(Loc.Get("MsgPageActive"), value.Name);
+        _ = _navigation.SelectRootAsync(value);
     }
 
     private async void OnPadKeyPressed(int index)
     {
-        if (LearnModeActive || _uploadCoordinator.IsUploading || _uploadCoordinator.IsBlocked)
+        if (LearnModeActive || !_navigation.CanDispatchPadActions || _uploadCoordinator.IsBlocked)
             return;
 
-        if (_pageHistory.Count > 0 && index == AppConfig.KeyCount - 1)
+        if (InFolderEditor && index == AppConfig.FolderBackKeyIndex)
         {
-            var targetPage = _pageHistory.Peek();
-            bool stillInFolder = _pageHistory.Count > 1;
-            if (!DeviceConnected || await UploadPageToDeviceAsync(targetPage, silent: true, renderBackButton: stillInFolder))
-            {
-                _pageHistory.Pop();
-                _runtimePage = targetPage;
-                StatusMessage = Loc.Get("MsgFolderExited");
-            }
+            await ExitFolderEditorAsync();
             return;
         }
 
-        var key = _runtimePage?.Keys.FirstOrDefault(k => k.KeyIndex == index);
+        var key = EditorPage.Keys.FirstOrDefault(k => k.KeyIndex == index);
         if (key is null)
             return;
 
@@ -432,7 +459,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         if (key.ActionType == KeyActionType.Folder)
         {
-            await OpenFolderOnDeviceAsync(key);
+            await OpenFolderAsync(key);
             return;
         }
 
@@ -497,6 +524,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     private void SwitchPage(KeyAction action)
     {
+        if (!CanNavigate) return;
         if (Pages.Count < 2 && action.PageSwitchMode != PageSwitchMode.GoTo)
         {
             StatusMessage = Loc.Get("MsgOnePage");
@@ -512,11 +540,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
             _ => current
         };
 
-        _pageHistory.Clear();
-        ActivePage = Pages[target];
-
-        if (DeviceConnected)
-            _ = UploadPageToDeviceAsync(ActivePage, silent: true);
+        if (ActivePage == Pages[target])
+            _ = _navigation.SelectRootAsync(Pages[target]);
+        else
+            ActivePage = Pages[target];
     }
 
     private async Task RefreshAgentStatusAsync()
@@ -559,6 +586,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void AddProfile()
     {
+        if (!CanNavigate) return;
         var profile = new ProfileConfig { Name = LocalizedNames.Profile(Profiles.Count + 1) };
         profile.EnsurePages(new HostConfigNameProvider(), Language);
         var vm = new ProfileViewModel(profile);
@@ -569,6 +597,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void RemoveProfile()
     {
+        if (!CanNavigate) return;
         if (Profiles.Count <= 1)
         {
             StatusMessage = Loc.Get("MsgLastProfile");
@@ -584,6 +613,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void DuplicateProfile()
     {
+        if (!CanNavigate) return;
         if (ActiveProfile is null)
             return;
 
@@ -600,6 +630,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void CopyPageToProfile(ProfileViewModel targetProfile)
     {
+        if (!CanNavigate) return;
         if (ActivePage is null)
             return;
 
@@ -636,11 +667,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void ImportProfile()
     {
+        if (!CanNavigate) return;
         var dlg = new OpenFileDialog
         {
             Filter = Loc.Get("DlgProfileImportFilter")
         };
-        if (dlg.ShowDialog() != true)
+        if (dlg.ShowDialog() != true || !CanNavigate)
             return;
 
         ProfileConfig? model;
@@ -692,6 +724,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void AddPage()
     {
+        if (!CanNavigate) return;
         if (ActiveProfile is null)
             return;
 
@@ -706,6 +739,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void RemovePage()
     {
+        if (!CanNavigate) return;
         if (ActivePage is null || Pages.Count <= 1)
         {
             StatusMessage = Loc.Get("MsgLastPage");
@@ -744,6 +778,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void ImportPage()
     {
+        if (!CanNavigate) return;
         if (ActiveProfile is null)
             return;
 
@@ -751,7 +786,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         {
             Filter = Loc.Get("DlgPageImportFilter")
         };
-        if (dlg.ShowDialog() != true)
+        if (dlg.ShowDialog() != true || !CanNavigate)
             return;
 
         PageConfig? model;
@@ -808,47 +843,56 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task UploadToDeviceAsync()
     {
+        if (!CanNavigate) return;
         Save();
-        await UploadActivePageAsync(silent: false);
+        if (DeviceConnected)
+            await _navigation.SynchronizeAsync();
+        else if (_device.TryFindDevice())
+            await SetDeviceConnectedAsync(true);
+        else
+            StatusMessage = Loc.Get("MsgNoDeviceUpload");
     }
 
-    private Task<bool> UploadActivePageAsync(bool silent) =>
-        UploadPageToDeviceAsync(_runtimePage ?? ActivePage, silent, _pageHistory.Count > 0);
-
-    private async Task<bool> UploadPageToDeviceAsync(PageViewModel? page, bool silent, bool renderBackButton = false)
+    private async Task<DeviceUploadResult> UploadPageToDeviceAsync(PageViewModel page, bool renderBackButton)
     {
-        if (page is null)
-            return false;
-
-        if (!_device.TryFindDevice())
+        try
         {
-            if (!silent)
-                StatusMessage = Loc.Get("MsgNoDeviceUpload");
-            return false;
-        }
-
-        if (!silent) StatusMessage = Loc.Get("MsgUploading");
-        var result = await _uploadCoordinator.UploadLatestAsync(page.ToModel(), renderBackButton,
-            _config.UploadButtonIndexBase, Loc.Get("LabelBack"));
-        if (result.Success)
-        {
-            _runtimePage = page;
-            StatusMessage = string.Format(Loc.Get("MsgUploadDone"), page.Name, result.UploadedKeys);
-        }
-        else if (result.Error != DeviceUploadError.Superseded)
-        {
-            StatusMessage = result.Error switch
+            if (!_device.TryFindDevice())
             {
-                DeviceUploadError.Blocked => Loc.Get("MsgUploadBlocked"),
-                DeviceUploadError.DeviceNotFound => Loc.Get("MsgNoDeviceUpload"),
-                DeviceUploadError.KeyUploadFailed => string.Format(Loc.Get("MsgKeyUploadFailed"), result.FailedKey),
-                DeviceUploadError.BackUploadFailed => Loc.Get("MsgBackUploadFailed"),
-                DeviceUploadError.UploadFailedRolledBack => Loc.Get("MsgUploadRolledBack"),
-                DeviceUploadError.RollbackFailed => Loc.Get("MsgUploadRollbackFailed"),
-                _ => Loc.Get("MsgNoDeviceUpload")
-            };
+                StatusMessage = Loc.Get("MsgNoDeviceUpload");
+                return new DeviceUploadResult(false, 0, Error: DeviceUploadError.DeviceNotFound);
+            }
+            if (_config.AutoApEnable && !await Task.Run(_device.TakeControl))
+            {
+                StatusMessage = Loc.Get("MsgTakeControlFail");
+                return new DeviceUploadResult(false, 0);
+            }
+
+            StatusMessage = Loc.Get("MsgUploading");
+            var result = await _uploadCoordinator.UploadLatestAsync(page.ToModel(), renderBackButton,
+                _config.UploadButtonIndexBase, Loc.Get("LabelBack"));
+            if (result.Success)
+                StatusMessage = string.Format(Loc.Get("MsgUploadDone"), page.Name, result.UploadedKeys);
+            else if (result.Error != DeviceUploadError.Superseded)
+            {
+                StatusMessage = result.Error switch
+                {
+                    DeviceUploadError.Blocked => Loc.Get("MsgUploadBlocked"),
+                    DeviceUploadError.DeviceNotFound => Loc.Get("MsgNoDeviceUpload"),
+                    DeviceUploadError.KeyUploadFailed => string.Format(Loc.Get("MsgKeyUploadFailed"), result.FailedKey),
+                    DeviceUploadError.BackUploadFailed => Loc.Get("MsgBackUploadFailed"),
+                    DeviceUploadError.UploadFailedRolledBack => Loc.Get("MsgUploadRolledBack"),
+                    DeviceUploadError.RollbackFailed => Loc.Get("MsgUploadRollbackFailed"),
+                    _ => Loc.Get("MsgNoDeviceUpload")
+                };
+            }
+            return result;
         }
-        return result.Success;
+        catch (Exception ex)
+        {
+            StatusMessage = OperationText.Format(OperationText.FromException(ex));
+            return new DeviceUploadResult(false, 0);
+        }
     }
 
     [RelayCommand]
@@ -876,11 +920,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task ResetStoredMappingsAsync()
     {
+        if (!CanNavigate) return;
         var answer = MessageBox.Show(
             Loc.Get("MsgBoxResetText"),
             Loc.Get("MsgBoxResetTitle"),
             MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (answer != MessageBoxResult.Yes)
+        if (answer != MessageBoxResult.Yes || !CanNavigate)
             return;
 
         StatusMessage = Loc.Get("MsgResetting");
@@ -891,28 +936,49 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void PickIcon()
     {
-        if (SelectedKey is null)
+        if (!CanEdit)
             return;
 
+        var key = SelectedKey;
         var dialog = new OpenFileDialog
         {
             Title = Loc.Get("DlgIconTitle"),
             Filter = Loc.Get("DlgIconFilter")
         };
-        if (dialog.ShowDialog() == true)
-            SelectedKey.IconPath = dialog.FileName;
+        if (dialog.ShowDialog() == true && CanEdit && _navigation.IsEditableKey(key))
+            key.IconPath = dialog.FileName;
+    }
+
+    [RelayCommand]
+    private void PickProgram()
+    {
+        var key = SelectedKey;
+        if (!CanEdit || key.ActionType != KeyActionType.LaunchProgram || !_navigation.IsEditableKey(key))
+            return;
+
+        var dialog = new OpenFileDialog
+        {
+            Title = Loc.Get("DlgProgramTitle"),
+            Filter = Loc.Get("DlgProgramFilter"),
+            DereferenceLinks = false,
+            CheckFileExists = true
+        };
+        if (dialog.ShowDialog() == true && CanEdit && _navigation.IsEditableKey(key) &&
+            key.ActionType == KeyActionType.LaunchProgram)
+            key.ProgramPath = dialog.FileName;
     }
 
     [RelayCommand]
     private void ClearIcon()
     {
-        if (SelectedKey is not null)
+        if (CanEdit)
             SelectedKey.IconPath = null;
     }
 
     [RelayCommand]
     private async Task TestActionAsync()
     {
+        if (!CanNavigate) return;
         if (SelectedKey is null || SelectedKey.ActionType == KeyActionType.None)
         {
             StatusMessage = Loc.Get("MsgNoAction");
@@ -926,17 +992,10 @@ public partial class MainViewModel : ObservableObject, IDisposable
         await ExecuteKeyAsync(SelectedKey, Loc.Get("ActionSourceTest"));
     }
 
-    private async Task OpenFolderOnDeviceAsync(KeyViewModel key)
+    private async Task OpenFolderAsync(KeyViewModel key)
     {
-        key.EnsureFolderPage(LocalizedNames.Folder(key.KeyNumber));
-        var targetPage = key.FolderPage!;
-        var previousPage = _runtimePage!;
-        if (!DeviceConnected || await UploadPageToDeviceAsync(targetPage, silent: true, renderBackButton: true))
-        {
-            _pageHistory.Push(previousPage);
-            _runtimePage = targetPage;
+        if (CanNavigate && await _navigation.OpenFolderAsync(key, LocalizedNames.Folder(key.KeyNumber)))
             StatusMessage = string.Format(Loc.Get("MsgFolderEntered"), key.KeyNumber);
-        }
     }
 
     public void Dispose()
@@ -944,40 +1003,21 @@ public partial class MainViewModel : ObservableObject, IDisposable
         if (_disposed) return;
         _disposed = true;
         _pingTimer.Stop();
+        _ = _navigation.SetDeviceConnectedAsync(false);
         _device.Dispose();
         _dispatcher.Dispose();
         _obsService.Dispose();
     }
 
     [RelayCommand]
-    private void OpenFolderEditor()
-    {
-        if (SelectedKey?.ActionType != KeyActionType.Folder) return;
-        SelectedKey.EnsureFolderPage(LocalizedNames.Folder(SelectedKey.KeyNumber));
-        _editorStack.Push((ActivePage!, SelectedKey));
-        EditorPage = SelectedKey.FolderPage;
-        OnPropertyChanged(nameof(InFolderEditor));
-        OnPropertyChanged(nameof(EditorBreadcrumb));
-        SelectKey(EditorPage!.Keys.First());
-    }
+    private Task OpenFolderEditorAsync() => OpenFolderAsync(SelectedKey);
 
     [RelayCommand]
-    private void ExitFolderEditor()
+    private async Task ExitFolderEditorAsync()
     {
-        if (_editorStack.Count == 0) return;
-        _editorStack.Pop();
-        EditorPage = _editorStack.Count == 0 ? ActivePage : _editorStack.Peek().folderKey.FolderPage;
-        OnPropertyChanged(nameof(InFolderEditor));
-        OnPropertyChanged(nameof(EditorBreadcrumb));
-        SelectKey(EditorPage!.Keys.First());
+        if (CanNavigate && await _navigation.GoBackAsync())
+            StatusMessage = Loc.Get("MsgFolderExited");
     }
 
-    public void SelectKey(KeyViewModel key)
-    {
-        if (EditorPage is not null)
-            foreach (var k in EditorPage.Keys)
-                k.IsSelected = false;
-        key.IsSelected = true;
-        SelectedKey = key;
-    }
+    public void SelectKey(KeyViewModel key) => _navigation.SelectKey(key);
 }

@@ -32,7 +32,8 @@ public enum KeyActionType
     SwitchPage,
     Obs,
     Nvidia,
-    Folder
+    Folder,
+    LaunchProgram
 }
 
 [JsonConverter(typeof(StrictEnumConverter<ObsCommand>))]
@@ -86,6 +87,9 @@ public class KeyAction
 
     /// <summary>Befehlszeile, wird via cmd /c ausgeführt.</summary>
     public string? CommandLine { get; set; }
+
+    public string? ProgramPath { get; set; }
+    public string? ProgramArguments { get; set; }
 
     public string? WorkingDirectory { get; set; }
 

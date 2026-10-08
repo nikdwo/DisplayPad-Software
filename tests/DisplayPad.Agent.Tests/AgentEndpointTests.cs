@@ -48,7 +48,23 @@ public sealed class AgentEndpointTests
 
             using var pinnedClient = new ActionDispatcher();
             pinnedClient.Configure("127.0.0.1", port, config.Token, servedFingerprint!);
-            Assert.NotNull(await pinnedClient.PingAsync());
+            var ping = await pinnedClient.PingAsync();
+            Assert.NotNull(ping);
+            Assert.True(ping.SupportsProgramLaunch);
+            foreach (var (path, expected) in new (string?, OperationErrorCode)[]
+            {
+                (null, OperationErrorCode.ProgramPathMissing),
+                ("relative.exe", OperationErrorCode.ProgramPathInvalid),
+                ("C:\\script.cmd", OperationErrorCode.ProgramPathInvalid),
+                (Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".exe"), OperationErrorCode.ProgramNotFound)
+            })
+            {
+                var action = new KeyAction { Type = KeyActionType.LaunchProgram, ProgramPath = path };
+                var remote = await pinnedClient.ExecuteAsync(action);
+                Assert.False(remote.Success);
+                Assert.Equal(expected, remote.ErrorCode);
+                Assert.Equal(LocalActionExecutor.Execute(action).ErrorCode, remote.ErrorCode);
+            }
             pinnedClient.Configure("127.0.0.1", port, config.Token, new string('0', 64));
             Assert.Null(await pinnedClient.PingAsync());
 

@@ -35,6 +35,8 @@ Für die lokale Entwicklung reicht weiterhin `dotnet build DisplayPadRemote.sln`
 3. Links **„Dienste"** öffnen und die Remote-Einstellungen wählen. IP/Name, Port 5599, Token und den vollständigen SHA-256-Fingerabdruck eintragen. Der Host akzeptiert das Zertifikat nur bei exakter Übereinstimmung.
 4. Taste im Raster anklicken → Beschriftung, Icon und Aktion festlegen:
    - **Hotkey:** ins Eingabefeld klicken und die Kombination drücken (z.B. `Ctrl+Alt+F1`). Medien-Tasten wie `MediaPlayPause`, `VolumeUp` können auch von Hand eingetragen werden.
+   - **Multimedia:** Wiedergabe/Pause, Stopp, nächster/vorheriger Titel, Lauter, Leiser oder Stummschaltung ein/aus auswählen. Ausführung auf Hauptrechner, Zweitrechner oder beiden; für neue Multimedia-Belegungen ist Wiedergabe/Pause voreingestellt. Beschriftung, Bild und Ziel bleiben erhalten.
+   - **Programm ausführen:** EXE-Datei oder Windows-Verknüpfung (.lnk) über „Durchsuchen“ auswählen oder einen absoluten Pfad eingeben. EXE-Dateien unterstützen Startparameter und ein optionales Arbeitsverzeichnis; leer bedeutet Programmordner. Bei Verknüpfungen gelten die darin gespeicherten Startparameter und das Arbeitsverzeichnis. Durchsuchen zeigt lokale Dateien; der Pfad muss auf dem gewählten Zielrechner vorhanden sein, bei „beiden“ auf beiden Rechnern. Testen ist über „Aktion jetzt testen“ möglich.
    - **Befehl:** wird via `cmd /c` ausgeführt, z.B. `start "" "C:\Program Files\obs-studio\bin\64bit\obs64.exe"`.
    - **Ausführen auf:** Zweitrechner, Hauptrechner (dieser PC) oder Beiden. Für rein lokale Tasten ist kein Agent nötig.
    - **Seite wechseln:** schaltet zur nächsten/vorherigen/einer bestimmten Seite (mit Wrap-around).
@@ -44,9 +46,19 @@ Für die lokale Entwicklung reicht weiterhin `dotnet build DisplayPadRemote.sln`
 
 Host-Konfiguration: `%AppData%\DisplayPadRemote\config.json`. Agent-Konfiguration, Zertifikat und Logs: `%LocalAppData%\DisplayPadRemote\Agent`. Agent-Token und OBS-Passwort werden mit Windows DPAPI für den aktuellen Benutzer geschützt gespeichert.
 
+Multimedia verwendet die vorhandenen Medienhotkeys. Profile, Speicherformat und Agent bleiben kompatibel; ein Agent-Update ist dafür nicht erforderlich. Vorhandene reine Medienhotkeys werden beim Laden als Multimedia angezeigt, auch mit abweichender Groß-/Kleinschreibung oder äußeren Leerzeichen. Kombinationen wie `Ctrl+MediaNext` bleiben normale Hotkeys. Der Wechsel zurück zu „Hotkey senden“ erhält den eingetragenen Befehl. Spulen, Shuffle, Wiederholung und die Auswahl eines bestimmten Players sind nicht enthalten.
+
+Programmstarts werden als eigene Aktion `LaunchProgram` mit getrenntem Pfad und Startparametern gespeichert und über Windows gestartet. Dafür Host **und Agent** aktualisieren; ein älterer Agent wird vor dem Programmstart erkannt und mit einem Update-Hinweis gemeldet. Andere Aktionen bleiben nutzbar. Konfigurationsversion 3 liest bestehende Konfigurationen weiterhin, wandelt vorhandene Befehle aber nicht in Programmstarts um. Vor einem Rückwechsel zu älteren Versionen die bisherige Konfiguration sichern; neue Programmbelegungen sind dort nicht lesbar. Beschriftung, Bild, Schriftgestaltung und Ausführungsziel bleiben beim Kategorienwechsel erhalten. Nicht enthalten sind eine Liste installierter Apps, automatische Iconübernahme und zusätzliche Fenster- oder Administratoroptionen.
+
 ## Oberfläche
 
 Der Aufbau orientiert sich an der [offiziellen DisplayPad-Ansicht von MOUNTAIN Base Camp](https://mountain.gg/start/keybindings-displaypad): Navigation links, Seiten daneben, Geräteansicht rechts und Tasteneditor darunter. „Profile" enthält Profilverwaltung und Import/Export; das aktive Profil lässt sich auch oben rechts wechseln. „Dienste" bündelt Remote, OBS und Base Camp. „Einstellungen" enthält Gerätezuordnung, Zurücksetzen der alten Belegung, Autostart, Sprache und Design. Speichern und Übertragen sind in der Fußleiste erreichbar.
+
+Tastenbelegungen lassen sich im Raster mit gedrückter linker Maustaste auf einen anderen Platz ziehen. Aktion, Bild, Beschriftung und Ordnerinhalt wandern gemeinsam; ein belegtes Ziel tauscht mit dem Ausgangsplatz. Ein kurzer Klick wählt weiterhin nur die Taste aus. Loslassen außerhalb des Rasters oder Escape bricht das Ziehen ab. In Ordnern bleibt die zwölfte Taste für „Zurück" reserviert; während der Gerätezuordnung oder einer Übertragung ist das Verschieben gesperrt. Änderungen anschließend wie gewohnt speichern und auf das Gerät übertragen.
+
+Ordner werden über die Ordnertaste am Pad oder „Ordner-Inhalt bearbeiten…“ in der Software geöffnet. Beide zeigen denselben Ordner und Unterordner. Jeder Ordner bietet elf belegbare Tasten und unten rechts die feste, nicht bearbeitbare Zurücktaste. Sie und die Zurück-Schaltfläche über dem Raster führen jeweils eine Ebene nach oben und wählen den verlassenen Ordner aus. Hauptseiten behalten zwölf frei belegbare Tasten.
+
+Mit angeschlossenem Pad wird ein Ordnerwechsel erst nach erfolgreicher Bildübertragung übernommen. Bei Fehlern bleiben Ansicht und Ordnerpfad erhalten. Ohne Pad lässt sich sofort navigieren; beim Wiederverbinden wird die aktuelle Ansicht übertragen, bevor Pad-Aktionen freigegeben werden. Seiten- und Profilwechsel öffnen und übertragen die gewählte Hauptseite. Scheitert diese Übertragung, bleibt die Softwareauswahl bestehen; Pad-Aktionen bleiben bis zur erfolgreichen erneuten Übertragung gesperrt. Während einer Übertragung sind Navigation und Bearbeitung gesperrt.
 
 ## Feintuning (config.json)
 
@@ -83,7 +95,7 @@ Manuell per PowerShell (Admin): `Stop-Service BaseCampService; Set-Service BaseC
 
 ## Sicherheit, Rotation und Wiederherstellung
 
-- Der Agent akzeptiert remote ausschließlich `Hotkey` und `Command`, maximal 64 KiB pro Anfrage. Fehlanmeldungen werden pro Quelladresse begrenzt; Tokens, Passwörter und vollständige Befehle werden nicht protokolliert.
+- Der Agent akzeptiert remote ausschließlich `Hotkey`, `Command` und `LaunchProgram`, maximal 64 KiB pro Anfrage. Fehlanmeldungen werden pro Quelladresse begrenzt; Tokens, Passwörter, Programmpfade und vollständige Befehle werden nicht protokolliert.
 - **Token rotieren:** Agent-Tray → „Token rotieren". Anschließend das kopierte neue Token im Host speichern. Das alte Token ist sofort ungültig.
 - **Zertifikatswechsel:** Ändert sich der im Tray kopierte Fingerabdruck unerwartet, nicht einfach übernehmen. Zuerst auf dem Agent-Rechner prüfen, warum `agent.pfx` ersetzt wurde.
 - Die Host-Konfiguration wird atomar gespeichert. Beim Überschreiben entsteht `config.json.bak`; eine beschädigte Hauptdatei wird sichtbar aus dieser Sicherung wiederhergestellt. Sind Hauptdatei und Sicherung ungültig, startet der Host mit einer sichtbaren Fehlermeldung.

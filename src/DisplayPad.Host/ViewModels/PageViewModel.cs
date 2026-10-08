@@ -18,6 +18,25 @@ public partial class PageViewModel : ObservableObject
             Keys.Add(new KeyViewModel(key));
     }
 
+    public bool CanMoveKey(KeyViewModel source, KeyViewModel target, bool isFolder) =>
+        source != target && Keys.Contains(source) && Keys.Contains(target) &&
+        (!isFolder || (source.KeyIndex != AppConfig.FolderBackKeyIndex &&
+                       target.KeyIndex != AppConfig.FolderBackKeyIndex));
+
+    public bool MoveKey(KeyViewModel source, KeyViewModel target, bool isFolder)
+    {
+        if (!CanMoveKey(source, target, isFolder)) return false;
+
+        int sourceIndex = Keys.IndexOf(source);
+        int targetIndex = Keys.IndexOf(target);
+        source.KeyIndex = targetIndex;
+        target.KeyIndex = sourceIndex;
+        // Keep the objects so open folders and their runtime references follow the binding.
+        Keys[sourceIndex] = target;
+        Keys[targetIndex] = source;
+        return true;
+    }
+
     public PageConfig ToModel() => new()
     {
         Name = Name,

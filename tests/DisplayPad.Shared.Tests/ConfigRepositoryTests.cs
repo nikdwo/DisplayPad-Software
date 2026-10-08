@@ -174,6 +174,63 @@ public sealed class ConfigRepositoryTests : IDisposable
         return config;
     }
 
+    [Fact]
+    public void VersionTwoLoadsWithoutConvertingCommandsAndSavesVersionThree()
+    {
+        Directory.CreateDirectory(_directory);
+        var config = CreateConfig();
+        config.ConfigVersion = 2;
+        var action = config.Profiles[0].Pages[0].Keys[0].Action;
+        action.Type = KeyActionType.Command;
+        action.CommandLine = "start \"\" \"C:\\Old App\\old.exe\"";
+        File.WriteAllText(PathUnderTest, JsonSerializer.Serialize(config));
+        var repository = new ConfigRepository(PathUnderTest);
+
+        var loaded = repository.Load().Config;
+        Assert.Equal(3, loaded.ConfigVersion);
+        Assert.Equal(KeyActionType.Command, loaded.Profiles[0].Pages[0].Keys[0].Action.Type);
+        Assert.Equal(action.CommandLine, loaded.Profiles[0].Pages[0].Keys[0].Action.CommandLine);
+        repository.Save(loaded);
+        Assert.Equal(3, repository.Load().Config.ConfigVersion);
+    }
+
+    [Theory]
+    [InlineData(".exe")]
+    [InlineData(".lnk")]
+    public void ProgramActionsSaveWithoutRequiringLocalFilesAndReload(string extension)
+    {
+        var config = CreateConfig();
+        var key = config.Profiles[0].Pages[0].Keys[0];
+        key.Target = ActionTarget.Both;
+        key.Action = new KeyAction
+        {
+            Type = KeyActionType.LaunchProgram,
+            ProgramPath = "Z:\\Nur auf dem Zielrechner\\Größe & App" + extension,
+            ProgramArguments = "--name \"zwei Wörter\" & %value%",
+            WorkingDirectory = "Z:\\Arbeitsordner"
+        };
+        var repository = new ConfigRepository(PathUnderTest);
+        repository.Save(config);
+        var loaded = repository.Load().Config.Profiles[0].Pages[0].Keys[0];
+        Assert.Equal(JsonSerializer.Serialize(key), JsonSerializer.Serialize(loaded));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ProgramFieldsRespectConfigurationLengthLimits(bool path)
+    {
+        var config = new AppConfig();
+        config.EnsureProfiles();
+        var action = config.Profiles[0].Pages[0].Keys[0].Action;
+        action.Type = KeyActionType.LaunchProgram;
+        if (path) action.ProgramPath = new string('a', 1025);
+        else action.ProgramArguments = new string('a', 8193);
+        var error = Assert.Throws<ConfigValidationException>(() => ConfigValidator.Validate(config));
+        Assert.Equal(OperationErrorCode.ConfigFieldTooLong, error.Result.ErrorCode);
+        Assert.Equal(path ? "ProgramPath" : "ProgramArguments", error.Result.Parameters[0]);
+    }
+
     private sealed class TestNameProvider : IConfigNameProvider
     {
         public string ProfileName(string language, int number) =>

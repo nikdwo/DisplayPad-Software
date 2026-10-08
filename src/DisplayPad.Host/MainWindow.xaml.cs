@@ -26,6 +26,9 @@ public partial class MainWindow : Window
     private readonly WinForms.ToolStripMenuItem _exitItem;
     private bool _trayHintShown;
     private bool _isExiting;
+    private Point _keyDragStart;
+    private Button? _pressedKeyButton;
+    private KeyViewModel? _draggedKey;
 
     public MainWindow(AppConfig config)
     {
@@ -145,6 +148,66 @@ public partial class MainWindow : Window
             ViewModel.SelectKey(key);
     }
 
+    private void KeyButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _pressedKeyButton = ViewModel.CanNavigate ? sender as Button : null;
+        _keyDragStart = e.GetPosition(this);
+    }
+
+    private void KeyButton_LostMouseCapture(object sender, MouseEventArgs e) => _pressedKeyButton = null;
+
+    private void KeyButton_PreviewMouseMove(object sender, MouseEventArgs e)
+    {
+        if (sender is not Button { DataContext: KeyViewModel key } button ||
+            button != _pressedKeyButton || e.LeftButton != MouseButtonState.Pressed ||
+            !ViewModel.CanNavigate ||
+            (ViewModel.InFolderEditor && key.KeyIndex == AppConfig.FolderBackKeyIndex))
+            return;
+
+        var distance = e.GetPosition(this) - _keyDragStart;
+        if (Math.Abs(distance.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(distance.Y) < SystemParameters.MinimumVerticalDragDistance)
+            return;
+
+        _pressedKeyButton = null;
+        button.ReleaseMouseCapture();
+        ViewModel.SelectKey(key);
+        _draggedKey = key;
+        try
+        {
+            // Only the local drag state is accepted; no action data leaves the window.
+            DragDrop.DoDragDrop(button, new DataObject("DisplayPad.Key", key.KeyIndex), DragDropEffects.Move);
+        }
+        finally
+        {
+            _draggedKey = null;
+        }
+        e.Handled = true;
+    }
+
+    private bool CanDropKey(KeyViewModel target) =>
+        _draggedKey is not null && ViewModel.CanNavigate &&
+        ViewModel.EditorPage?.CanMoveKey(_draggedKey, target, ViewModel.InFolderEditor) == true;
+
+    private void KeyButton_DragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = sender is Button { DataContext: KeyViewModel target } && CanDropKey(target)
+            ? DragDropEffects.Move : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void KeyButton_Drop(object sender, DragEventArgs e)
+    {
+        e.Effects = DragDropEffects.None;
+        e.Handled = true;
+        if (sender is Button { DataContext: KeyViewModel target } && CanDropKey(target) &&
+            ViewModel.EditorPage!.MoveKey(_draggedKey!, target, ViewModel.InFolderEditor))
+        {
+            ViewModel.SelectKey(_draggedKey!);
+            e.Effects = DragDropEffects.Move;
+        }
+    }
+
     private void CopyPageToProfileButton_Click(object sender, RoutedEventArgs e)
     {
         var menu = new ContextMenu();
@@ -167,6 +230,7 @@ public partial class MainWindow : Window
     {
         e.Handled = true;
 
+        if (!ViewModel.CanEdit) return;
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
 
         // Reine Modifier-Tasten ignorieren, bis eine "richtige" Taste dazukommt

@@ -114,12 +114,13 @@ public static class AgentWebApplication
         app.MapGet("/ping", () => Results.Ok(new PingResponse
         {
             MachineName = Environment.MachineName,
+            SupportsProgramLaunch = true,
             Version = ProductVersion.FromAssembly(typeof(Program).Assembly)
         }));
 
         app.MapPost("/execute", (ExecuteRequest request) =>
         {
-            if (request.Action is null || request.Action.Type is not (KeyActionType.Hotkey or KeyActionType.Command))
+            if (request.Action is null || request.Action.Type is not (KeyActionType.Hotkey or KeyActionType.Command or KeyActionType.LaunchProgram))
                 return Results.Json(new ExecuteResponse
                 {
                     Success = false,
@@ -147,6 +148,19 @@ public static class AgentWebApplication
                 {
                     Log.Info("Remote-Hotkey wird ausgeführt.");
                     HotkeyExecutor.Send(request.Action.Hotkey!);
+                }
+                else if (request.Action.Type == KeyActionType.LaunchProgram)
+                {
+                    Log.Info("Remote-Programmstart wird ausgeführt (Pfad und Parameter redigiert).");
+                    var result = ProgramExecutor.Run(request.Action.ProgramPath,
+                        request.Action.ProgramArguments, request.Action.WorkingDirectory);
+                    if (!result.Success)
+                        Log.Error($"Remote-Programmstart fehlgeschlagen: {result.ErrorCode}");
+                    return Results.Json(new ExecuteResponse
+                    {
+                        Success = result.Success,
+                        ErrorCode = result.ErrorCode
+                    }, statusCode: result.Success ? 200 : 400);
                 }
                 else
                 {

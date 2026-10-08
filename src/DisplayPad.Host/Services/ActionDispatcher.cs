@@ -1,6 +1,7 @@
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
+using System.Text.Json;
 using DisplayPad.Shared.Dto;
 using DisplayPad.Shared.Models;
 
@@ -19,6 +20,15 @@ public sealed class ActionDispatcher : IRemoteAgentClient, IDisposable
     private string _baseUrl = "";
     private string _token = "";
     private string _configurationKey = "";
+
+    public ActionDispatcher() { }
+
+    internal ActionDispatcher(HttpClient http, string baseUrl, string token)
+    {
+        _http = http;
+        _baseUrl = baseUrl;
+        _token = token;
+    }
 
     public void Configure(string host, int port, string token, string certificateFingerprint)
     {
@@ -52,6 +62,22 @@ public sealed class ActionDispatcher : IRemoteAgentClient, IDisposable
             return new ExecuteResponse { Success = false, ErrorCode = OperationErrorCode.RemoteMissingFingerprint };
         try
         {
+            if (action.Type == KeyActionType.LaunchProgram)
+            {
+                using var capabilityRequest = CreateRequest(HttpMethod.Get, "/ping");
+                using var capabilityResponse = await _http.SendAsync(capabilityRequest, cancellationToken);
+                if (!capabilityResponse.IsSuccessStatusCode)
+                    return new ExecuteResponse
+                    {
+                        ErrorCode = OperationErrorCode.RemoteHttpError,
+                        ErrorParameters = [((int)capabilityResponse.StatusCode).ToString()]
+                    };
+                var capabilities = await capabilityResponse.Content.ReadFromJsonAsync<PingResponse>(cancellationToken);
+                if (capabilities is null)
+                    return new ExecuteResponse { ErrorCode = OperationErrorCode.RemoteNetworkError };
+                if (!capabilities.SupportsProgramLaunch)
+                    return new ExecuteResponse { ErrorCode = OperationErrorCode.AgentProgramUpdateRequired };
+            }
             using var request = CreateRequest(HttpMethod.Post, "/execute");
             request.Content = JsonContent.Create(new ExecuteRequest { Action = action });
             using var response = await _http.SendAsync(request, cancellationToken);
@@ -63,7 +89,7 @@ public sealed class ActionDispatcher : IRemoteAgentClient, IDisposable
                 ErrorParameters = new[] { ((int)response.StatusCode).ToString() }
             };
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
             return new ExecuteResponse
             {

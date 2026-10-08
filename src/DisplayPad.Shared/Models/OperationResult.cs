@@ -54,7 +54,15 @@ public enum OperationErrorCode
     ConfigVersionUnsupported,
     ConfigRecoveredFromBackup,
     ConfigLoadFailed,
-    ConfigAndBackupInvalid
+    ConfigAndBackupInvalid,
+    ProgramPathMissing,
+    ProgramPathInvalid,
+    ProgramNotFound,
+    ProgramArgumentsInvalid,
+    ProgramWorkingDirectoryInvalid,
+    ProgramStartBlocked,
+    ProgramStartFailed,
+    AgentProgramUpdateRequired
 }
 
 public sealed record OperationResult(

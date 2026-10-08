@@ -67,6 +67,8 @@ public static class ConfigValidator
             CheckLength(key.IconPath, 1024, "IconPath");
             CheckLength(key.Action.Hotkey, 128, "Hotkey");
             CheckLength(key.Action.CommandLine, 8192, "Command");
+            CheckLength(key.Action.ProgramPath, 1024, "ProgramPath");
+            CheckLength(key.Action.ProgramArguments, 8192, "ProgramArguments");
             CheckLength(key.Action.WorkingDirectory, 1024, "WorkingDirectory");
             CheckLength(key.Action.ObsParameter, 256, "ObsParameter");
             CheckLength(key.Action.ObsParameter2, 256, "ObsParameter");

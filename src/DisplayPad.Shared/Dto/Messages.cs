@@ -18,6 +18,7 @@ public class ExecuteResponse
 
 public class PingResponse
 {
+    public bool SupportsProgramLaunch { get; set; }
     public string Status { get; set; } = "ok";
     public string Version { get; set; } = "1.0";
     public string MachineName { get; set; } = "";

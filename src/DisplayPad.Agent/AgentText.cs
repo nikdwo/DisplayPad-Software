@@ -17,7 +17,7 @@ public static class AgentText
             ["Running"] = ("HTTPS aktiv – {0}:{1}", "HTTPS active – {0}:{1}"),
             ["TooManyAuth"] = ("Zu viele fehlgeschlagene Anmeldungen.", "Too many failed authentication attempts."),
             ["InvalidAuth"] = ("Ungültige Anmeldung.", "Invalid authentication."),
-            ["UnsupportedAction"] = ("Nur Hotkey und Command sind remote zulässig.", "Only Hotkey and Command are allowed remotely."),
+            ["UnsupportedAction"] = ("Nur Hotkeys, Befehle und Programmstarts sind remote zulässig.", "Only hotkeys, commands and program launches are allowed remotely."),
             ["MissingHotkey"] = ("Der Hotkey fehlt.", "The hotkey is missing."),
             ["MissingCommand"] = ("Der Befehl fehlt.", "The command is missing."),
             ["ExecutionFailed"] = ("Die Aktion konnte nicht ausgeführt werden.", "The action could not be executed."),

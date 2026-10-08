@@ -46,6 +46,14 @@ public static class KeyImageRenderer
         return outputPath;
     }
 
+    public static byte[] RenderBackButtonPngBytes(string label)
+    {
+        using var bmp = DrawBackButton(label);
+        using var stream = new MemoryStream();
+        bmp.Save(stream, ImageFormat.Png);
+        return stream.ToArray();
+    }
+
     private static Bitmap DrawBackButton(string label)
     {
         var bmp = new Bitmap(Size, Size);
