@@ -13,7 +13,8 @@ public class PageConfig
         for (int i = 0; i < AppConfig.KeyCount; i++)
         {
             if (!Keys.Any(k => k.KeyIndex == i))
-                Keys.Add(new KeyConfig { KeyIndex = i });
+                // Keep KeyConfig's legacy default for old actions whose JSON omits Target.
+                Keys.Add(new KeyConfig { KeyIndex = i, Target = ActionTarget.Local });
         }
         Keys = Keys.Where(k => k.KeyIndex is >= 0 and < AppConfig.KeyCount)
                    .OrderBy(k => k.KeyIndex)

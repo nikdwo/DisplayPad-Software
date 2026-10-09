@@ -7,6 +7,8 @@
     <s:String x:Key="LblPages">Pages</s:String>
     <s:String x:Key="LblDeviceSection">Device</s:String>
     <s:String x:Key="LblProfilesHint">Profiles keep your pages and key bindings together for different applications.</s:String>
+    <s:String x:Key="TtpReorderList">Hold the left mouse button and drag to reorder. The marker shows where the entry will be inserted.</s:String>
+    <s:String x:Key="MsgListReordered">Order changed. Use Save to keep the new order.</s:String>
     <s:String x:Key="LblKeyBindingsHint">Click a key to edit. Hold the left mouse button and drag to move; occupied keys swap places.</s:String>
 
     <!-- Tabs -->
@@ -138,7 +140,18 @@
     <s:String x:Key="LblProgramArguments">Arguments (optional)</s:String>
     <s:String x:Key="DlgProgramTitle">Select a program or shortcut</s:String>
     <s:String x:Key="DlgProgramFilter">Programs and shortcuts (*.exe;*.lnk)|*.exe;*.lnk</s:String>
-    <s:String x:Key="HintProgramTarget">Browse shows files on this PC. The absolute path must exist on the target computer; both computers use the same path.</s:String>
+    <s:String x:Key="HintProgramTarget">The program list and Browse show programs on this PC and use their icon. The absolute path must exist on the target computer; both computers use the same path.</s:String>
+    <s:String x:Key="BtnInstalledPrograms">Installed programs…</s:String>
+    <s:String x:Key="DlgInstalledPrograms">Locally installed programs</s:String>
+    <s:String x:Key="HintInstalledPrograms">Programs from this PC's Start Menu and registered program paths. If a program is missing, select its EXE using Browse.</s:String>
+    <s:String x:Key="LblProgramSearch">Search</s:String>
+    <s:String x:Key="BtnSelectProgram">Select program</s:String>
+    <s:String x:Key="MsgProgramsLoading">Loading programs…</s:String>
+    <s:String x:Key="MsgProgramsLoadFailed">The program list could not be loaded. Use Browse instead.</s:String>
+    <s:String x:Key="MsgProgramsEmpty">No matching programs found.</s:String>
+    <s:String x:Key="FmtProgramsFound">{0} programs found</s:String>
+    <s:String x:Key="MsgProgramSelected">Program and icon selected.</s:String>
+    <s:String x:Key="MsgProgramSelectedWithoutIcon">Program selected. Its icon could not be read; you can choose an image manually.</s:String>
     <s:String x:Key="HintProgramShortcut">The shortcut's own arguments and working directory are used.</s:String>
     <s:String x:Key="HintProgramWorkingDirectory">Leave empty to use the program's directory.</s:String>
     <s:String x:Key="ErrorProgramPathMissing">Select a program or shortcut first.</s:String>

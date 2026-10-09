@@ -8,6 +8,7 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         Title="{DynamicResource AppTitle}" Height="820" Width="1280"
+        Icon="Assets/displaypad.ico"
         MinHeight="700" MinWidth="1100" ResizeMode="CanResize"
         Background="{DynamicResource ThemeWindowBackground}" Foreground="{DynamicResource ThemeTextBrush}"
         FontFamily="Segoe UI" FontSize="13"
@@ -374,7 +375,11 @@
                         </Grid.ColumnDefinitions>
                         <DockPanel Margin="0,0,24,0">
                             <Button DockPanel.Dock="Bottom" Content="{DynamicResource TtpAddProfile}" Command="{Binding AddProfileCommand}" Margin="0,12,0,0"/>
-                            <ListBox x:Name="ProfileList" ItemsSource="{Binding Profiles}" SelectedItem="{Binding ActiveProfile}" IsEnabled="{Binding CanNavigate}">
+                            <ListBox x:Name="ProfileList" ItemsSource="{Binding Profiles}" SelectedItem="{Binding ActiveProfile}" IsEnabled="{Binding CanNavigate}"
+                                     AllowDrop="True" ToolTip="{DynamicResource TtpReorderList}"
+                                     PreviewMouseLeftButtonDown="OrderList_MouseDown" PreviewMouseMove="OrderList_MouseMove"
+                                     PreviewMouseLeftButtonUp="OrderList_MouseUp" LostMouseCapture="OrderList_LostMouseCapture"
+                                     DragOver="OrderList_DragOver" DragLeave="OrderList_DragLeave" Drop="OrderList_Drop">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel>
@@ -429,7 +434,11 @@
                                     <Button Content="↓" Command="{Binding ImportPageCommand}" ToolTip="{DynamicResource TtpImportPage}" AutomationProperties.Name="{DynamicResource TtpImportPage}" Padding="0"/>
                                 </UniformGrid>
                             </StackPanel>
-                            <ListBox x:Name="PageList" ItemsSource="{Binding Pages}" SelectedItem="{Binding ActivePage}" IsEnabled="{Binding CanNavigate}">
+                            <ListBox x:Name="PageList" ItemsSource="{Binding Pages}" SelectedItem="{Binding ActivePage}" IsEnabled="{Binding CanNavigate}"
+                                     AllowDrop="True" ToolTip="{DynamicResource TtpReorderList}"
+                                     PreviewMouseLeftButtonDown="OrderList_MouseDown" PreviewMouseMove="OrderList_MouseMove"
+                                     PreviewMouseLeftButtonUp="OrderList_MouseUp" LostMouseCapture="OrderList_LostMouseCapture"
+                                     DragOver="OrderList_DragOver" DragLeave="OrderList_DragLeave" Drop="OrderList_Drop">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
@@ -573,9 +582,13 @@
                                         <ComboBoxItem Content="{DynamicResource CbPosBottom}"
                                                       Tag="{x:Static models:LabelPosition.Bottom}"/>
                                     </ComboBox>
-                                    <TextBox Width="45" Text="{Binding FontSize, UpdateSourceTrigger=PropertyChanged}"
-                                             VerticalContentAlignment="Center"
-                                             ToolTip="{DynamicResource TtpFontSize}" Margin="0,0,8,0"/>
+                                    <!-- Read-only text also displays saved sizes outside the available choices. -->
+                                    <ComboBox x:Name="FontSizePicker" Width="84"
+                                              ItemsSource="{x:Static vm:KeyViewModel.FontSizes}"
+                                              IsEditable="True" IsReadOnly="True"
+                                              Text="{Binding FontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              AutomationProperties.Name="{DynamicResource TtpFontSize}"
+                                              ToolTip="{DynamicResource TtpFontSize}" Margin="0,0,8,0"/>
                                     <CheckBox Content="{DynamicResource CbBold}" IsChecked="{Binding Bold}"
                                               VerticalAlignment="Center" Margin="0,0,8,0"/>
                                     <CheckBox Content="{DynamicResource CbItalic}" IsChecked="{Binding Italic}"
@@ -843,11 +856,11 @@
                                         </Style>
                                     </StackPanel.Style>
                                     <TextBlock Text="{DynamicResource LblExecuteOn}" Margin="0,0,0,3"/>
-                                    <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding Target}">
-                                        <ComboBoxItem Content="{DynamicResource TgtRemote}"
-                                                      Tag="{x:Static models:ActionTarget.Remote}"/>
+                                    <ComboBox x:Name="ExecutionTargetPicker" SelectedValuePath="Tag" SelectedValue="{Binding Target}">
                                         <ComboBoxItem Content="{DynamicResource TgtLocal}"
                                                       Tag="{x:Static models:ActionTarget.Local}"/>
+                                        <ComboBoxItem Content="{DynamicResource TgtRemote}"
+                                                      Tag="{x:Static models:ActionTarget.Remote}"/>
                                         <ComboBoxItem Content="{DynamicResource TgtBoth}"
                                                       Tag="{x:Static models:ActionTarget.Both}"/>
                                     </ComboBox>
@@ -918,6 +931,8 @@
                                         <TextBox x:Name="ProgramPathBox" Text="{Binding ProgramPath, UpdateSourceTrigger=PropertyChanged}"
                                                  AutomationProperties.Name="{DynamicResource LblProgram}"/>
                                     </DockPanel>
+                                    <Button Content="{DynamicResource BtnInstalledPrograms}" HorizontalAlignment="Left" Margin="0,0,0,8"
+                                            Command="{Binding DataContext.PickInstalledProgramCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                     <TextBlock Text="{DynamicResource HintProgramTarget}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
                                     <TextBlock Text="{DynamicResource HintProgramShortcut}" TextWrapping="Wrap" Margin="0,0,0,8">
                                         <TextBlock.Style>

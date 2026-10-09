@@ -85,6 +85,7 @@ public sealed class KeyViewModelProgramTests
         key.ProgramPath = "C:\\editor.exe";
         key.ProgramArguments = "--keep";
         key.Label = "Editor";
+        key.IconPath = "program-icons/editor.png";
         var expected = key.ToModel();
         expected.KeyIndex = 5;
         Assert.True(page.MoveKey(key, page.Keys[5], isFolder: true));

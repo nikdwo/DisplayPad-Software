@@ -8,6 +8,8 @@ namespace DisplayPad.Host.ViewModels;
 
 public partial class KeyViewModel : ObservableObject
 {
+    public static IReadOnlyList<int> FontSizes { get; } = Enumerable.Range(8, 9).ToArray();
+
     private static readonly string[] MediaCommands =
     [
         "MediaPlayPause", "MediaStop", "MediaNext", "MediaPrev",
@@ -39,7 +41,7 @@ public partial class KeyViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PreviewImage))]
-    private int _fontSize = 18;
+    private int _fontSize = 10;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PreviewImage))]
@@ -115,7 +117,7 @@ public partial class KeyViewModel : ObservableObject
     private string _workingDirectory = "";
 
     [ObservableProperty]
-    private ActionTarget _target = ActionTarget.Remote;
+    private ActionTarget _target = ActionTarget.Local;
 
     [ObservableProperty]
     private PageSwitchMode _pageSwitchMode = PageSwitchMode.Next;
@@ -184,7 +186,7 @@ public partial class KeyViewModel : ObservableObject
         ProgramPath = model.Action.ProgramPath ?? "";
         ProgramArguments = model.Action.ProgramArguments ?? "";
         WorkingDirectory = model.Action.WorkingDirectory ?? "";
-        Target = model.Target;
+        Target = model.Action.Type == KeyActionType.None ? ActionTarget.Local : model.Target;
         PageSwitchMode = model.Action.PageSwitchMode;
         TargetPage = model.Action.TargetPage;
         ObsCommand = model.Action.ObsCommand;

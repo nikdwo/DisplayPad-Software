@@ -26,6 +26,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private bool _disposed;
     private readonly PageNavigation _navigation;
     private BitmapImage? _backButtonImage;
+    private int _programSelectionVersion;
 
     private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
     private static readonly JsonSerializerOptions _jsonReadOptions = new() { PropertyNameCaseInsensitive = true };
@@ -583,6 +584,22 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     // ── Profile commands ──────────────────────────────────────────────────────
 
+    public bool MoveProfile(ProfileViewModel source, int insertionIndex)
+    {
+        if (!CanNavigate || !ListReorder.Move(Profiles, source, insertionIndex)) return false;
+        _config.ActiveProfileIndex = Math.Max(0, Profiles.IndexOf(ActiveProfile!));
+        StatusMessage = Loc.Get("MsgListReordered");
+        return true;
+    }
+
+    public bool MovePage(PageViewModel source, int insertionIndex)
+    {
+        if (!CanNavigate || ActiveProfile is null || !ActiveProfile.MovePage(source, insertionIndex)) return false;
+        OnPropertyChanged(nameof(PageIndicator));
+        StatusMessage = Loc.Get("MsgListReordered");
+        return true;
+    }
+
     [RelayCommand]
     private void AddProfile()
     {
@@ -950,7 +967,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void PickProgram()
+    private async Task PickProgramAsync()
     {
         var key = SelectedKey;
         if (!CanEdit || key.ActionType != KeyActionType.LaunchProgram || !_navigation.IsEditableKey(key))
@@ -963,9 +980,34 @@ public partial class MainViewModel : ObservableObject, IDisposable
             DereferenceLinks = false,
             CheckFileExists = true
         };
-        if (dialog.ShowDialog() == true && CanEdit && _navigation.IsEditableKey(key) &&
-            key.ActionType == KeyActionType.LaunchProgram)
-            key.ProgramPath = dialog.FileName;
+        if (dialog.ShowDialog() == true)
+            await SelectProgramAsync(key, dialog.FileName);
+    }
+
+    [RelayCommand]
+    private async Task PickInstalledProgramAsync()
+    {
+        var key = SelectedKey;
+        if (!CanEdit || key.ActionType != KeyActionType.LaunchProgram || !_navigation.IsEditableKey(key))
+            return;
+
+        var dialog = new InstalledProgramsWindow { Owner = Application.Current.MainWindow };
+        if (dialog.ShowDialog() == true && dialog.SelectedProgram is { } program)
+            await SelectProgramAsync(key, program.ProgramPath);
+    }
+
+    private async Task SelectProgramAsync(KeyViewModel key, string path)
+    {
+        if (!CanEdit || !_navigation.IsEditableKey(key) || key.ActionType != KeyActionType.LaunchProgram) return;
+        int version = ++_programSelectionVersion;
+        var oldPath = key.ProgramPath;
+        var oldIcon = key.IconPath;
+        var iconPath = await Task.Run(() => ProgramIcon.TrySave(path));
+        if (version != _programSelectionVersion || !CanEdit || !_navigation.IsEditableKey(key) ||
+            key.ActionType != KeyActionType.LaunchProgram || key.ProgramPath != oldPath || key.IconPath != oldIcon) return;
+        key.ProgramPath = path;
+        key.IconPath = iconPath;
+        StatusMessage = Loc.Get(iconPath is null ? "MsgProgramSelectedWithoutIcon" : "MsgProgramSelected");
     }
 
     [RelayCommand]

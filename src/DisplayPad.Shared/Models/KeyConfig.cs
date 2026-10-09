@@ -31,7 +31,7 @@ public class KeyConfig
     /// <summary>Pfad zu einer Icon-Bilddatei (png/jpg), optional.</summary>
     public string? IconPath { get; set; }
 
-    public int FontSize { get; set; } = 18;
+    public int FontSize { get; set; } = 10;
     public bool Bold { get; set; } = true;
     public bool Italic { get; set; }
     public LabelPosition LabelPosition { get; set; } = LabelPosition.Bottom;

@@ -4,8 +4,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using DisplayPad.Host.Services;
 using DisplayPad.Host.ViewModels;
 using DisplayPad.Shared.Models;
@@ -20,6 +22,8 @@ public partial class MainWindow : Window
     private MainViewModel ViewModel => (MainViewModel)DataContext;
 
     private readonly WinForms.NotifyIcon _trayIcon;
+    private readonly System.Drawing.Icon _connectedIcon;
+    private readonly System.Drawing.Icon _disconnectedIcon;
     private readonly WinForms.ToolStripMenuItem _showItem;
     private readonly WinForms.ToolStripMenuItem _hideItem;
     private readonly WinForms.ToolStripMenuItem _configItem;
@@ -29,6 +33,12 @@ public partial class MainWindow : Window
     private Point _keyDragStart;
     private Button? _pressedKeyButton;
     private KeyViewModel? _draggedKey;
+    private Point _listDragStart;
+    private ListBox? _pressedList;
+    private object? _pressedListItem;
+    private ListBox? _draggedList;
+    private object? _draggedListItem;
+    private ListInsertionAdorner? _insertionMarker;
 
     public MainWindow(AppConfig config)
     {
@@ -47,13 +57,15 @@ public partial class MainWindow : Window
         menu.Items.Add(new WinForms.ToolStripSeparator());
         menu.Items.Add(_exitItem);
 
+        _connectedIcon = LoadTrayIcon(true);
+        _disconnectedIcon = LoadTrayIcon(false);
         _trayIcon = new WinForms.NotifyIcon
         {
-            Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? System.Drawing.SystemIcons.Application,
-            Text = "DisplayPad Remote",
-            ContextMenuStrip = menu,
-            Visible = true
+            ContextMenuStrip = menu
         };
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        UpdateTrayConnection();
+        _trayIcon.Visible = true;
         _trayIcon.DoubleClick += (_, _) =>
         {
             if (IsVisible) HideToTray();
@@ -61,6 +73,28 @@ public partial class MainWindow : Window
         };
         Loc.LanguageChanged += UpdateProgrammaticTexts;
         AppTheme.Changed += ApplyWindowTheme;
+    }
+
+    internal static System.Drawing.Icon LoadTrayIcon(bool connected)
+    {
+        string name = connected ? "tray-connected" : "tray-disconnected";
+        using var stream = typeof(MainWindow).Assembly.GetManifestResourceStream($"DisplayPad.Host.Assets.{name}.ico")
+            ?? throw new InvalidOperationException($"Missing icon resource: {name}");
+        using var icon = new System.Drawing.Icon(stream, WinForms.SystemInformation.SmallIconSize);
+        return (System.Drawing.Icon)icon.Clone();
+    }
+
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.DeviceConnected)) UpdateTrayConnection();
+    }
+
+    private void UpdateTrayConnection()
+    {
+        if (_isExiting) return;
+        _trayIcon.Icon = ViewModel.DeviceConnected ? _connectedIcon : _disconnectedIcon;
+        _trayIcon.Text = ViewModel.DeviceConnected
+            ? Loc.Get("MsgDeviceConnected") : Loc.Get("MsgDeviceDisconnected");
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -86,6 +120,7 @@ public partial class MainWindow : Window
         _hideItem.Text = Loc.Get("TrayHide");
         _configItem.Text = Loc.Get("TrayConfig");
         _exitItem.Text = Loc.Get("TrayExit");
+        UpdateTrayConnection();
     }
 
     private void ShowFromTray()
@@ -118,9 +153,12 @@ public partial class MainWindow : Window
         _isExiting = true;
         Loc.LanguageChanged -= UpdateProgrammaticTexts;
         AppTheme.Changed -= ApplyWindowTheme;
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         ViewModel.Dispose();
         _trayIcon.Visible = false;
         _trayIcon.Dispose();
+        _connectedIcon.Dispose();
+        _disconnectedIcon.Dispose();
         Environment.Exit(0);
     }
 
@@ -205,6 +243,143 @@ public partial class MainWindow : Window
         {
             ViewModel.SelectKey(_draggedKey!);
             e.Effects = DragDropEffects.Move;
+        }
+    }
+
+    private void OrderList_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not ListBox list || !ViewModel.CanNavigate ||
+            ItemsControl.ContainerFromElement(list, e.OriginalSource as DependencyObject) is not ListBoxItem item)
+            return;
+        _pressedList = list;
+        _pressedListItem = item.DataContext;
+        _listDragStart = e.GetPosition(list);
+        // Delay selection so dragging an inactive page does not start a device upload.
+        e.Handled = true;
+        list.CaptureMouse();
+    }
+
+    private void OrderList_LostMouseCapture(object sender, MouseEventArgs e)
+    {
+        if (sender is ListBox { IsMouseCaptured: true }) return;
+        _pressedList = null;
+        _pressedListItem = null;
+    }
+
+    private void OrderList_MouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not ListBox list || list != _pressedList) return;
+        var item = _pressedListItem;
+        list.ReleaseMouseCapture();
+        if (ViewModel.CanNavigate && item is not null && list.Items.Contains(item))
+        {
+            list.SelectedItem = item;
+            list.Focus();
+        }
+        e.Handled = true;
+    }
+
+    private void OrderList_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (sender is not ListBox list || list != _pressedList || _pressedListItem is null ||
+            e.LeftButton != MouseButtonState.Pressed || !ViewModel.CanNavigate) return;
+        var distance = e.GetPosition(list) - _listDragStart;
+        if (Math.Abs(distance.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(distance.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+        _draggedList = list;
+        _draggedListItem = _pressedListItem;
+        list.ReleaseMouseCapture();
+        try
+        {
+            DragDrop.DoDragDrop(list, new DataObject("DisplayPad.ListItem", list.Name), DragDropEffects.Move);
+        }
+        finally
+        {
+            ClearInsertionMarker();
+            _draggedList = null;
+            _draggedListItem = null;
+        }
+        e.Handled = true;
+    }
+
+    private bool CanReorderList(ListBox list, DragEventArgs e) =>
+        ViewModel.CanNavigate && list == _draggedList && _draggedListItem is not null &&
+        list.Items.Contains(_draggedListItem) && e.Data.GetDataPresent("DisplayPad.ListItem");
+
+    private static (int Index, double Y) ListInsertionPoint(ListBox list, Point point)
+    {
+        double end = list.ActualHeight;
+        for (int index = 0; index < list.Items.Count; index++)
+        {
+            if (list.ItemContainerGenerator.ContainerFromIndex(index) is not ListBoxItem item) continue;
+            double top = item.TranslatePoint(new Point(), list).Y;
+            if (point.Y < top + item.ActualHeight / 2) return (index, top);
+            end = top + item.ActualHeight;
+        }
+        return (list.Items.Count, end);
+    }
+
+    private void OrderList_DragOver(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        e.Effects = DragDropEffects.None;
+        ClearInsertionMarker();
+        if (sender is not ListBox list || !CanReorderList(list, e)) return;
+        var point = e.GetPosition(list);
+        if (VisualTreeHelper.GetChildrenCount(list) > 0 &&
+            VisualTreeHelper.GetChild(list, 0) is Border { Child: ScrollViewer scroll })
+        {
+            if (point.Y < 24) scroll.LineUp();
+            else if (point.Y > list.ActualHeight - 24) scroll.LineDown();
+        }
+        var layer = AdornerLayer.GetAdornerLayer(list);
+        if (layer is not null)
+        {
+            _insertionMarker = new ListInsertionAdorner(list, ListInsertionPoint(list, point).Y);
+            layer.Add(_insertionMarker);
+        }
+        e.Effects = DragDropEffects.Move;
+    }
+
+    private void OrderList_DragLeave(object sender, DragEventArgs e) => ClearInsertionMarker();
+
+    private void OrderList_Drop(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        e.Effects = DragDropEffects.None;
+        ClearInsertionMarker();
+        if (sender is not ListBox list || !CanReorderList(list, e)) return;
+        int insertion = ListInsertionPoint(list, e.GetPosition(list)).Index;
+        bool moved = _draggedListItem switch
+        {
+            ProfileViewModel profile when list == ProfileList => ViewModel.MoveProfile(profile, insertion),
+            PageViewModel page when list == PageList => ViewModel.MovePage(page, insertion),
+            _ => false
+        };
+        if (moved) e.Effects = DragDropEffects.Move;
+    }
+
+    private void ClearInsertionMarker()
+    {
+        if (_insertionMarker is null) return;
+        AdornerLayer.GetAdornerLayer(_insertionMarker.AdornedElement)?.Remove(_insertionMarker);
+        _insertionMarker = null;
+    }
+
+    private sealed class ListInsertionAdorner : Adorner
+    {
+        private readonly double _y;
+        public ListInsertionAdorner(ListBox list, double y) : base(list)
+        {
+            _y = y;
+            IsHitTestVisible = false;
+        }
+
+        protected override void OnRender(DrawingContext context)
+        {
+            double y = Math.Clamp(_y, 1, Math.Max(1, AdornedElement.RenderSize.Height - 1));
+            context.DrawLine(new Pen((Brush)((FrameworkElement)AdornedElement).FindResource("ThemeAccentBrush"), 2),
+                new Point(0, y), new Point(AdornedElement.RenderSize.Width, y));
         }
     }
 

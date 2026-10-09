@@ -3,12 +3,19 @@
   <ItemGroup>
     <ProjectReference Include="..\DisplayPad.Shared\DisplayPad.Shared.csproj" />
     <InternalsVisibleTo Include="DisplayPad.Agent.Tests" />
+    <InternalsVisibleTo Include="DisplayPad.Host.Tests" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- WinForms nur für das NotifyIcon; die globalen Usings kollidieren sonst mit WPF-Typen -->
     <Using Remove="System.Windows.Forms" />
     <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\displaypad.ico" />
+    <EmbeddedResource Include="Assets\tray-connected.ico" />
+    <EmbeddedResource Include="Assets\tray-disconnected.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,6 +28,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <ApplicationIcon>Assets\displaypad.ico</ApplicationIcon>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

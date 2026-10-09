@@ -1,0 +1,71 @@
+<Window x:Class="DisplayPad.Host.InstalledProgramsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{DynamicResource DlgInstalledPrograms}" Width="640" Height="520" MinWidth="440" MinHeight="350"
+        Background="{DynamicResource ThemeSurfaceBackground}" Foreground="{DynamicResource ThemeSoftTextBrush}"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Loaded="Window_Loaded" Closed="Window_Closed">
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource ThemeSoftTextBrush}"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource ThemeControlBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeSoftTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeBorderBrush}"/>
+            <Setter Property="Padding" Value="7,5"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource ThemeAccentBrush}"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource ThemeControlBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ThemeSoftTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeBorderBrush}"/>
+            <Setter Property="Padding" Value="12,6"/>
+        </Style>
+        <Style TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource ThemeSelectionBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="{DynamicResource HintInstalledPrograms}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+        <DockPanel Grid.Row="1" Margin="0,0,0,10">
+            <Label Content="{DynamicResource LblProgramSearch}" Target="{Binding ElementName=SearchBox}"
+                   Foreground="{DynamicResource ThemeSoftTextBrush}"/>
+            <TextBox x:Name="SearchBox" TextChanged="Search_TextChanged"
+                     AutomationProperties.Name="{DynamicResource LblProgramSearch}"/>
+        </DockPanel>
+        <ListBox x:Name="ProgramsList" Grid.Row="2" Background="{DynamicResource ThemeControlBackground}"
+                 Foreground="{DynamicResource ThemeSoftTextBrush}" BorderBrush="{DynamicResource ThemeBorderBrush}"
+                 SelectionChanged="Programs_SelectionChanged" MouseDoubleClick="Programs_DoubleClick"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 AutomationProperties.Name="{DynamicResource DlgInstalledPrograms}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel ToolTip="{Binding ProgramPath}">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding ProgramPath}" FontSize="11" Margin="0,3,0,0"
+                                   Foreground="{DynamicResource ThemeMutedTextBrush}" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <TextBlock x:Name="ListStatus" Grid.Row="3" Text="{DynamicResource MsgProgramsLoading}" Margin="0,10,0,0"/>
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button Content="{DynamicResource BtnCancel}" IsCancel="True" Margin="0,0,8,0"/>
+            <Button x:Name="SelectButton" Content="{DynamicResource BtnSelectProgram}" Click="Select_Click"
+                    IsDefault="True" IsEnabled="False" BorderBrush="{DynamicResource ThemeAccentBrush}"/>
+        </StackPanel>
+    </Grid>
+</Window>

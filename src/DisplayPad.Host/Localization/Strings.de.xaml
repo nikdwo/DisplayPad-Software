@@ -7,6 +7,8 @@
     <s:String x:Key="LblPages">Seiten</s:String>
     <s:String x:Key="LblDeviceSection">Gerät</s:String>
     <s:String x:Key="LblProfilesHint">Profile bündeln deine Seiten und Tastenbelegungen für unterschiedliche Anwendungen.</s:String>
+    <s:String x:Key="TtpReorderList">Mit gedrückter linker Maustaste die Reihenfolge ändern. Die Markierung zeigt die Einfügeposition.</s:String>
+    <s:String x:Key="MsgListReordered">Reihenfolge geändert. Mit „Speichern“ dauerhaft übernehmen.</s:String>
     <s:String x:Key="LblKeyBindingsHint">Taste anklicken zum Bearbeiten. Mit gedrückter linker Maustaste verschieben; belegte Plätze werden getauscht.</s:String>
 
     <!-- Tabs -->
@@ -138,7 +140,18 @@
     <s:String x:Key="LblProgramArguments">Startparameter (optional)</s:String>
     <s:String x:Key="DlgProgramTitle">Programm oder Verknüpfung auswählen</s:String>
     <s:String x:Key="DlgProgramFilter">Programme und Verknüpfungen (*.exe;*.lnk)|*.exe;*.lnk</s:String>
-    <s:String x:Key="HintProgramTarget">Durchsuchen zeigt Dateien dieses PCs. Der absolute Pfad muss auf dem Zielrechner existieren; bei beiden Rechnern gilt derselbe Pfad.</s:String>
+    <s:String x:Key="HintProgramTarget">Programmliste und Durchsuchen zeigen Programme dieses PCs und übernehmen ihr Symbol. Der absolute Pfad muss auf dem Zielrechner existieren; bei beiden Rechnern gilt derselbe Pfad.</s:String>
+    <s:String x:Key="BtnInstalledPrograms">Installierte Programme…</s:String>
+    <s:String x:Key="DlgInstalledPrograms">Lokal installierte Programme</s:String>
+    <s:String x:Key="HintInstalledPrograms">Programme aus dem Startmenü und registrierten Programmpfaden dieses PCs. Fehlt ein Programm, wähle seine EXE über „Durchsuchen“.</s:String>
+    <s:String x:Key="LblProgramSearch">Suchen</s:String>
+    <s:String x:Key="BtnSelectProgram">Programm auswählen</s:String>
+    <s:String x:Key="MsgProgramsLoading">Programme werden geladen…</s:String>
+    <s:String x:Key="MsgProgramsLoadFailed">Die Programmliste konnte nicht geladen werden. Verwende „Durchsuchen“.</s:String>
+    <s:String x:Key="MsgProgramsEmpty">Keine passenden Programme gefunden.</s:String>
+    <s:String x:Key="FmtProgramsFound">{0} Programme gefunden</s:String>
+    <s:String x:Key="MsgProgramSelected">Programm und Symbol übernommen.</s:String>
+    <s:String x:Key="MsgProgramSelectedWithoutIcon">Programm übernommen. Das Symbol konnte nicht gelesen werden; du kannst ein Bild selbst auswählen.</s:String>
     <s:String x:Key="HintProgramShortcut">Die Startparameter und das Arbeitsverzeichnis aus der Verknüpfung werden verwendet.</s:String>
     <s:String x:Key="HintProgramWorkingDirectory">Leer lassen, um den Programmordner zu verwenden.</s:String>
     <s:String x:Key="ErrorProgramPathMissing">Bitte ein Programm oder eine Verknüpfung auswählen.</s:String>
